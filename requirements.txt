@@ -2,3 +2,6 @@ dash
 numpy
 pandas
 plotly
+gunicorn
+matplotlib
+dash_bootstrap_components
