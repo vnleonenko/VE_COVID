@@ -1,14 +1,14 @@
 from dash import Dash, html, dcc, Output, Input
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from utils import read_csv_files, extract_map_data, get_subjects, parse_files, get_graph_data
+from utils import get_subjects, parse_files, get_graph_data
 
 
-csv_folder_path = './input_csv_files'
+csv_folder_path = 'input_csv_files'
 data = parse_files(csv_folder_path)
 bar_chart_data = get_graph_data(data)
 
-geojson_path = r"./map_data/admin_level_4_copy.geojson"
+geojson_path = './map_data/admin_level_4_copy.geojson'
 subjects = get_subjects(geojson_path)
 
 months_map_data = list(data['Все вакцины'].keys())
@@ -21,14 +21,13 @@ dd_margin_left = '20px'
 
 """ APP """
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
+server_v2 = app.server
 app.layout = html.Div([
         html.Div([
             html.H1(children='Визуализация эффективности вакцинации'),
             html.Hr(),
             html.P('''* показатели ЭВ рассчитанны по данным выгрузок регистра заболевших COVID-19
-                   и регистра вакцинированных на 15 число месяца, следующего за отчетным''',
-                   style={}),
+                   и регистра вакцинированных на 15 число месяца, следующего за отчетным'''),
         ], style={'margin': '10px 40px 10px 40px',
                   'padding': '20px 0px 0px 0px'}),
 

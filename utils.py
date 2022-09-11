@@ -150,7 +150,6 @@ def get_graph_data(data):
             else:
                 res_df = pd.concat([res_df, ve_russia], ignore_index=True)
 
-    res_df = res_df.drop(['name'], axis=1)
     res_df = res_df.sort_values(['date', 'vaccine'])
     res_df.reset_index(drop=True, inplace=True)
 
