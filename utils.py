@@ -40,6 +40,11 @@ def get_subjects(file_path):
             subject['properties']['name'] = 'Кабардино-Балкарская Республика'
         elif subject['properties']['name'] == 'Чеченская республика':
             subject['properties']['name'] = 'Чеченская Республика'
+        '''name = subject['properties']['name']
+        geometry = subject['geometry']
+        id = subject['id']
+        subjects.append({'id': id, 'properties': {'name': name},
+                         'geometry': geometry})'''
 
     json_data['features'] = sorted(json_data['features'], key=lambda x: x['properties']['name'])
     return json_data
@@ -189,4 +194,9 @@ def parse_csv_files(folder_path):
 
     return ve
 '''
+
+if __name__ == '__main__':
+    geojson_path = r"./map_data/admin_level_4_copy.geojson"
+    sub = get_subjects(geojson_path)
+    print(sub['features'][0]['properties'].keys())
 
