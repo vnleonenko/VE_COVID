@@ -1,3 +1,4 @@
+import dash.exceptions
 import pandas as pd
 from dash import Dash, html, dcc, Output, Input, State, ClientsideFunction
 import plotly.graph_objects as go
@@ -9,7 +10,7 @@ csv_folder_path = 'input_csv_files'
 data = parse_files(csv_folder_path)
 bar_chart_data = get_graph_data(data)
 
-geojson_path = r"./map_data/admin_level_4_copy.geojson"
+geojson_path = r"map_data/map_data.json"
 subjects = get_subjects(geojson_path)
 
 months_map_data = list(data['Все вакцины'].keys())
@@ -146,17 +147,19 @@ app.layout = html.Div([
     Output('store-data', 'data'),
     Output('store-chart-data', 'data'),
     Input('age_group', 'value'),
+    #prevent_initial_call=True
 )
 def update_store(age):
-    temp_dict = deepcopy(data)
-    for key, value_dict in temp_dict.items():
-        for date, item_df in value_dict.items():
-            value_dict[date] = item_df.to_dict('records')
 
-    temp_chart_data = deepcopy(bar_chart_data)
-    temp_chart_data = temp_chart_data.to_dict('records')
+        temp_dict = deepcopy(data)
+        for key, value_dict in temp_dict.items():
+            for date, item_df in value_dict.items():
+                value_dict[date] = item_df.to_dict('records')
 
-    return [temp_dict, temp_chart_data]
+        temp_chart_data = deepcopy(bar_chart_data)
+        temp_chart_data = temp_chart_data.to_dict('records')
+
+        return [temp_dict, temp_chart_data]
 
 
 @app.callback(
@@ -201,8 +204,8 @@ def update_bar_chart(stored_data, vac_type, case, age, date_ru):
     ci_low = data_y_v - graph_data_v[ci_low_title]
     data_x_v = [i for i in range(data_y_v.shape[0])]
     #graph_data_v = pd.to_datetime(graph_data_v['date'], dayfirst=True, infer_datetime_format=True)
-    tick_text = graph_data_v['date'].dt.strftime('%m.%Y')
-    title_text = f'ЭВ в отношении предотвращения {title_case} COVID-19 <br>({vac_type}, {age})'
+    tick_text_v = graph_data_v['date'].dt.strftime('%m.%Y')
+    title_text_v = f'ЭВ в отношении предотвращения {title_case} COVID-19 <br>({vac_type}, {age})'
     bar_chart_v = go.Figure(data=[go.Bar(x=data_x_v,
                                          y=data_y_v,
                                          width=0.5,
@@ -221,16 +224,16 @@ def update_bar_chart(stored_data, vac_type, case, age, date_ru):
                               marker_line_width=1.5, opacity=0.6)
     bar_chart_v.update_layout(margin={'l': 50, 'b': 20, 't': 110, 'r': 20},
                               template='none',
-                              xaxis={'tickmode': 'array', 'tickvals': data_x_v, 'ticktext': tick_text},
+                              xaxis={'tickmode': 'array', 'tickvals': data_x_v, 'ticktext': tick_text_v},
                               yaxis_tickformat='.0%',
                               separators=',',
-                              title={'text': title_text, 'x': 0.5, 'y': 0.9, 'xanchor': 'center', 'yanchor': 'top'})
+                              title={'text': title_text_v, 'x': 0.5, 'y': 0.9, 'xanchor': 'center', 'yanchor': 'top'})
 
     month, year, _ = date_ru.split(" ")
     date_en = f'{year}-{ru_en_month[month]}-15'
     data_x_h = stored_data[stored_data['date'] == date_en][column]
     data_y_h = stored_data[stored_data['date'] == date_en]['vaccine']
-    title_text = f'ЭВ в отношении предотвращения {title_case} COVID-19<br>({age}, {date_ru})'
+    title_text_h = f'ЭВ в отношении предотвращения<br>{title_case} COVID-19<br>({age}, {date_ru})'
     bar_chart_h = go.Figure(data=[go.Bar(x=data_x_h, y=data_y_h,
                                          orientation='h',
                                          marker={'color': data_x_h,
@@ -243,11 +246,11 @@ def update_bar_chart(stored_data, vac_type, case, age, date_ru):
     bar_chart_h.update_layout(template='plotly_white',
                               xaxis={'showticklabels': True},
                               xaxis_tickformat='.0%',
-                              autosize=False,
+                              autosize=True,
                               margin={"r": 50, "t": 130, "l": 130, "b": 0})
     bar_chart_h.update_xaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
     bar_chart_h.update_yaxes(zeroline=True, zerolinewidth=1, zerolinecolor='black')
-    bar_chart_h.update_layout(title={'text': title_text, 'font_color': 'black',
+    bar_chart_h.update_layout(title={'text': title_text_h, 'font_color': 'black',
                                      'y': 0.9, 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'},
                               title_font_size=14)
 
