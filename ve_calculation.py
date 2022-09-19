@@ -128,12 +128,19 @@ def calc_ve(ppv, pcv, data_point, region, vac_interval_group, vaccine, age, case
                            f'& vac_interval_group=="{vac_interval_group}"'
                            f'& vaccine=="{vaccine}"')
     factor_pcv = factor_pcv['pcv_' + case + age_prefix]
-    # print('factor_ppv', factor_ppv.values[0])
-    # print('factor_pcv', factor_pcv.values[0])
+    print(factor_pcv)
+    print(type(factor_ppv))
+    if len(factor_pcv) != 0:
+        factor_pcv = factor_pcv.values[0]
+    if len(factor_ppv) != 0:
+        factor_ppv = factor_ppv.values[0]
+    print('factor_ppv', factor_ppv.values)
+    print('factor_pcv', factor_pcv.values)
 
-    ve = 1 - (factor_pcv.values[0] / (1 - factor_pcv.values[0])) * \
-        ((1 - factor_ppv.values[0]) / factor_ppv.values[0])
+    ve = 1 - (factor_pcv / (1 - factor_pcv)) * \
+        ((1 - factor_ppv) / factor_ppv)
     return round(ve, 5)
 
 
-print(calc_ve(ppv_df, pcv_df, '2021.11_01-07-2022', 'Алтайский край', '21_45_days', 'CoviVac', '18-59', 'zab'))
+print(calc_ve(ppv_df, pcv_df, '2021.11_01-07-2022', 'Алтайский край', '45_75_days', 'CoviVac', '18-59', 'zab'))
+print(0.85577+0)

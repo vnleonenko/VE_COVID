@@ -87,6 +87,7 @@ def make_layout():
 
                 dcc.Store(id='store-data', storage_type='session'),
                 dcc.Store(id='store-chart-data', storage_type='session'),
+                html.Div(id='test')
 
             ], className='app-div-container')
 

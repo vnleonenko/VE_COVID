@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Dash, Input, Output
 
-from layout import make_layout
+from mobile_layout import make_mobile_layout
 from utils import get_subjects, parse_files, get_graph_data
 from graphs import plot_choropleth_map
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart
@@ -22,9 +22,12 @@ ru_en_month = dict(январь='01', февраль='02', март='03',
                    июль='07', август='08', сентябрь='09',
                    октябрь='10', ноябрь='11', декабрь='12')
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
+           meta_tags=[{'name': 'viewport',
+                       'content': 'width=device-width, initial-scale=0.9, maximum-scale=1.1,'
+                                  'minimum-scale=0.5'}])
 server_v2 = app.server
-app.layout = make_layout()
+app.layout = make_mobile_layout()
 
 
 @app.callback(
@@ -132,14 +135,6 @@ def update_map(stored_data, vac_type, case, age, date_ru):
 
     return map_figure
 
-
-app.clientside_callback(
-    """function(arg1){
-    return arg1.Все вакцины.ноябрь 2021 г."}
-    """,
-    Output('test', 'children'),
-    Input('store-data', 'data')
-)
 
 
 if __name__ == '__main__':
