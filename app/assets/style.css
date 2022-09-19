@@ -1,0 +1,82 @@
+.app-div-container{
+width: 100%;
+height: 100%;
+background-color: rgb(234, 234, 242)
+}
+
+.header{
+margin: 0px 40px 10px 40px;
+padding: 20px 0px 0px 0px
+}
+
+.dropdown-container{
+width: 35%;
+backgroundColor: white;
+border-radius: 10px
+}
+
+.dropdown{
+width: 80%;
+margin: 10px 10px 20px 20px;
+font-size: 17px
+}
+
+.dropdown-filter-label{
+margin-top: 20px;
+margin-left: 20px
+}
+
+.dropdown-label{
+font-size: 19px;
+margin-left: 20px
+}
+
+.dropdown-tabs-container{
+display: flex;
+flex-direction: row;
+gap: 50px;
+margin: 40px 40px 0px 40px
+}
+
+.tabs-container{
+width: 80%
+}
+
+.tabs{
+margin: 20px 40px 10px 40px
+}
+
+.bar-chart-v{
+height: 55vh;
+margin: 20px 40px 10px 40px;
+vertical-align: middle;
+background-color: white
+}
+
+.strains-graph{
+margin: 20px 40px 10px 40px;
+vertical-align: middle;
+height: 55vh;
+background-color: white
+}
+
+.map-bar-chart-container{
+display: flex;
+flex-direction: row;
+gap: 50px;
+margin: 0px 40px
+}
+
+.map-container{
+width: 65%;
+height: 70vh;
+background-color: white
+}
+
+.map{
+height: 65vh
+}
+
+.bar-chart-h-container{
+width: 35%
+}
