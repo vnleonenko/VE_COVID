@@ -17,9 +17,8 @@ def query_to_df(query, cursor, columns):
     return pd.DataFrame(query_res, columns=columns)
 
 
-def group_by_subjects(data_frame):
+def group_by_subjects(data_frame, columns_to_groupby):
     agg_dict = {}
-    columns_to_groupby = ['data_point', 'vac_interval_group', 'vaccine']
     for agg_column in data_frame.columns:
         if agg_column == 'region':
             agg_dict.update({agg_column: lambda x: 'РФ'})
@@ -31,9 +30,8 @@ def group_by_subjects(data_frame):
     return data_frame.groupby(columns_to_groupby).agg(agg_dict)
 
 
-def group_by_vaccines(data_frame):
+def group_by_vaccines(data_frame, columns_to_groupby):
     agg_dict = {}
-    columns_to_groupby = ['data_point', 'region', 'vac_interval_group']
     for agg_column in data_frame.columns:
         if agg_column == 'vaccine':
             agg_dict.update({agg_column: lambda x: 'AllVaccines'})
@@ -45,11 +43,10 @@ def group_by_vaccines(data_frame):
     return data_frame.groupby(columns_to_groupby).agg(agg_dict)
 
 
-def add_aggregated_data(data_frame):
-    grouped_subjects = group_by_subjects(data_frame)
-    grouped_vaccines = group_by_vaccines(pd.concat([data_frame, grouped_subjects]))
+def add_aggregated_data(data_frame, agg_by_subjects_columns, aggr_by_vac_columns):
+    grouped_subjects = group_by_subjects(data_frame, agg_by_subjects_columns)
+    grouped_vaccines = group_by_vaccines(pd.concat([data_frame, grouped_subjects]), aggr_by_vac_columns)
     grouped_df = pd.concat([data_frame, grouped_subjects, grouped_vaccines])
     grouped_df.sort_values(by=['data_point', 'region', 'vac_interval_group', 'vaccine'], inplace=True)
     grouped_df.reset_index(inplace=True, drop=True)
     return grouped_df
-

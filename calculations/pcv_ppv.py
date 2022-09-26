@@ -19,8 +19,9 @@ def compute_pcv(inf_vac_data):
                 age = '_60'
             elif 'total' in pcv_column:
                 age = '_total'
-            # print('count_vac_'+case+age)
-            pcv_df[pcv_column] = inf_vac_data['count_vac_' + case + age] / inf_vac_data['count_' + case + age]
+            num_column = 'count_vac_'+case+age
+            denom_column = 'count_'+case+age
+            pcv_df[pcv_column] = inf_vac_data[num_column] / inf_vac_data[denom_column]
     return pcv_df
 
 
