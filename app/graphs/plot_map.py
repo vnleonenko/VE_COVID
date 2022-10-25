@@ -31,10 +31,10 @@ def plot_choropleth_map(borders, data, column_label, locations_label, title_text
                              autosize=True,
                              paper_bgcolor='white',
                              plot_bgcolor='white',
-                             mapbox=dict(center=dict(lat=70, lon=105), zoom=1.5),
-                             margin={"r": 0, "t": 90, "l": 0, "b": 0},
+                             mapbox=dict(center=dict(lat=70, lon=105), zoom=1.4),
+                             margin={"r": 0, "t": 80, "l": 0, "b": 0},
                              title={'text': title_text, 'font_color': 'black',
-                                    'x': 0.5, 'y': 0.90, 'xanchor': 'center', 'yanchor': 'top'},
+                                    'x': 0.5, 'y': 0.95, 'xanchor': 'center', 'yanchor': 'top'},
                              title_font_size=14)
     map_figure.update_geos(fitbounds="locations")
     return map_figure
