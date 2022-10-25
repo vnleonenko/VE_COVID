@@ -133,14 +133,14 @@ def update_map(stored_data, vac_type, case, age, date_ru):
     return map_figure
 
 
-app.clientside_callback(
+'''app.clientside_callback(
     """function(arg1){
     return arg1.Все вакцины.ноябрь 2021 г."}
     """,
     Output('test', 'children'),
     Input('store-data', 'data')
 )
-
+'''
 
 if __name__ == '__main__':
     app.run_server(debug=True)

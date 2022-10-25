@@ -12,9 +12,9 @@ def plot_vertical_bar_chart(x, y, ci, title_text):
                                                     arrayminus=ci[0],
                                                     width=4,
                                                     thickness=2),
-                                       hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ+ "
-                                                     "%{error_y.array:.1%}"
-                                                     "<br> ДИ- %{error_y.arrayminus:.1%} "
+                                       hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
+                                                     "+%{error_y.array:.1%} "
+                                                     "/ -%{error_y.arrayminus:.1%} "
                                                      "<extra></extra>")])
     bar_chart.update_traces(marker_color='rgb(158,202,225)',
                             marker_line_color='rgb(8,48,107)',
@@ -22,7 +22,7 @@ def plot_vertical_bar_chart(x, y, ci, title_text):
                             opacity=0.6)
     bar_chart.update_layout(paper_bgcolor="white",
                             autosize=False,
-                            template='none',
+                            template='plotly_white',
                             margin={'l': 30, 'b': 0, 't': 140, 'r': 20},
                             xaxis={'tickmode': 'array', 'tickvals': x_vals,
                                    'ticktext': tick_text},

@@ -16,9 +16,9 @@ backgroundColor: white;
 }
 
 .dropdown{
-width: 80%;
-margin: 10px 10px 20px 20px;
-font-size: 3vi
+width: 90%;
+margin: 10px 20px 20px 20px;
+font-size: 2vi
 }
 
 .dropdown-filter-label{
@@ -46,6 +46,12 @@ height: 50vh;
 background-color: white
 }
 
+.int-bar-chart{
+margin: 10px 20px 20px 20px;
+height: 55vh;
+background-color: white
+}
+
 .strains-graph{
 margin: 20px 40px 10px 40px;
 vertical-align: middle;
@@ -53,15 +59,21 @@ vertical-align: middle;
 background-color: white
 }
 
-.map-container{
-height: 65vh;
-background-color: green
-}
 
 .map{
-height: 65vh
+height: 100%
 }
 
+.int-map-slider{
+margin-top: 20px;
+margin-left: 20px;
+margin-bottom: 50px;
+width: 95%;
+background-color: white;
+
+}
+
+
 .bar-chart-h{
-height: 65vh;
+height: 70vh;
 }
