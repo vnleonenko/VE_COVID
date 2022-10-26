@@ -1,13 +1,12 @@
 from copy import deepcopy
 import random as rnd
-import numpy as np
 
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Dash, Input, Output
 
 from mobile_layout import make_mobile_layout
-from utils import get_subjects, parse_files, get_graph_data, parse_csv
+from utils import get_subjects, parse_csv
 from interval_utils import get_interval_data, convert_date_format
 
 from graphs import plot_choropleth_map
@@ -46,7 +45,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport',
                        'content': 'width=device-width, initial-scale=0.9, maximum-scale=1.1,'
                                   'minimum-scale=0.5'}])
-server_v2 = app.server
+server = app.server
 app.layout = make_mobile_layout(month_list)
 
 
@@ -172,8 +171,7 @@ def update_map(stored_data, vac_type, case, age, date_ru):
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_group', 'value'),
-    Input('month_year_int', 'value'),
-
+    Input('month_year_int', 'value')
 )
 def update_interval_bar_chart(vac_type, case, age, dates_list):
     converted_dates = sorted(convert_date_format(dates_list),
@@ -209,8 +207,8 @@ def update_interval_bar_chart(vac_type, case, age, dates_list):
     vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
                      '75_90_days': '75-90 дней', '90_105_days': '90-105 дней',
                      '105_165_days': '105-165 дней', '165_195_days': '165-195 дней'}
-    for data_point in converted_dates:
-        date = data_point.split("_")[0].split(".")
+    for date in converted_dates:
+        date = date.split("_")[0].split(".")
         y = chart_data[chart_data['data_point'].str.contains(".".join(date))]
         date = ".".join(date[::-1])
         x = [[date for _ in range(len(vac_intervals))], list(vac_intervals.values())]
