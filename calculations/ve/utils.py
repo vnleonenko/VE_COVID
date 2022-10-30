@@ -8,8 +8,9 @@ def connect_to_db():
     username = 've_access'
     password = 'VE@niiGrippa4$'
     cnxn = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};'
-                          'SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+password)
-    return cnxn.cursor()
+                          'SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+password,
+                          autocommit=True)
+    return cnxn, cnxn.cursor()
 
 
 def query_to_df(query, cursor, columns):
@@ -50,3 +51,5 @@ def add_aggregated_data(data_frame, agg_by_subjects_columns, aggr_by_vac_columns
     grouped_df.sort_values(by=['data_point', 'region', 'vac_interval_group', 'vaccine'], inplace=True)
     grouped_df.reset_index(inplace=True, drop=True)
     return grouped_df
+
+
