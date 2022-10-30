@@ -106,7 +106,7 @@ def main():
                    'vac_count_18_59', 'vac_count_60', 'vac_count_total']
     pop_columns = ['region', 'nas_age_18_59', 'nas_age_60', 'nas_age_adult_total']
 
-    db_cursor = connect_to_db()
+    cnxn, db_cursor = connect_to_db()
 
     inf_vac_df = query_to_df(inf_vac_q, db_cursor, inf_vac_columns)
     inf_df = query_to_df(inf_q, db_cursor, inf_columns)

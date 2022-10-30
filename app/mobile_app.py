@@ -2,15 +2,15 @@ from copy import deepcopy
 import random as rnd
 
 import dash_bootstrap_components as dbc
-import pandas as pd
 from dash import Dash, Input, Output
+import pandas as pd
 
+from interval_utils import get_interval_data, convert_date_format
 from mobile_layout import make_mobile_layout
 from utils import get_subjects, parse_csv
-from interval_utils import get_interval_data, convert_date_format
 
-from graphs import plot_choropleth_map
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart
+from graphs import plot_choropleth_map
 import plotly.graph_objects as go
 
 
@@ -202,6 +202,10 @@ def update_interval_bar_chart(vac_type, case, age, dates_list):
     ci_high_title = 'cih_' + case_prefix + age_prefix
     ci_low_title = 'cil_' + case_prefix + age_prefix
     chart_data = interval_data[interval_data['vaccine'] == vaccines_ru_en[vac_type]]
+
+    '''query = fselect * from dbo.VE_W_VAC_INT
+            where vaccine = {vaccines_ru_en[vac_type]} and 
+            '''
 
     fig = go.Figure()
     vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
