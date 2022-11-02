@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 from dash import html, dcc
-
 import interval_utils as iu
 
 
@@ -21,7 +21,8 @@ subjects = {'РФ': 'Российская Федерация',
             'Московская область': 'Московская область'}
 
 
-def make_mobile_layout(month_list):
+def make_mobile_layout(month_dict):
+    month_list = list(month_dict.keys())
     layout = html.Div([
                 dbc.Row(
                     dbc.Col(
@@ -51,6 +52,7 @@ def make_mobile_layout(month_list):
                                          value='Спутник V',
                                          id='vaccine_type',
                                          clearable=False,
+
                                          className='dropdown'),
                             html.Label(children='Возрастная группа', className='dropdown-label'),
                             dcc.Dropdown(age_groups,
@@ -73,22 +75,25 @@ def make_mobile_layout(month_list):
                                          id='month_year',
                                          clearable=False,
                                          className='dropdown'),
-                            html.Label('Месяц и год для интервальной ЭВ', className='dropdown-label'),
-                            dcc.Dropdown(options=dates_list,
-                                         value=dates_list[:3],
-                                         id='month_year_int',
-                                         multi=True,
-                                         clearable=False,
-                                         className='dropdown'),
-                            dbc.Checklist(
-                                options=[
-                                    {"label": "Изменять карту", "value": 1},
-                                ],
-                                value=[],
-                                id='dropdown',
-                                inline=True,
-                                className='dropdown'
+                            html.Label('Месяц и год для интервальной ЭВ ', className='dropdown-label'),
+                            dmc.MultiSelect(
+                                description="Выберите до 4х различных месяцев",
+                                data=sorted(month_list, key=lambda x: x.split(".")[1]),
+                                value=month_list[1:3],
+                                maxSelectedValues=4,
+                                zIndex=100,
+                                id='month_year_int',
+                                style={'width': '18vw', 'height': '5%', 'margin': '10px 30px 20px 20px',
+                                       'fontSize': '20vi', 'fontFamily': 'Helvetica'}
                             ),
+                            dcc.Checklist(options=[{'label': 'Изменять карту',
+                                                    'value': True}],
+                                          value=[True],
+                                          id='map-checklist',
+                                          className='dropdown',
+                                          inputStyle={"margin-right": 15,
+                                                      "margin-top": 20},
+                                          )
                         ], className='dropdown-container shadow p-3 mb-5 bg-white rounded'),
                     ],  xs=10, sm=8, md=10, lg=3),
 
@@ -114,16 +119,12 @@ def make_mobile_layout(month_list):
                 dbc.Row([
                     dbc.Col(
                             html.Div([
-                                dbc.Tabs([
-                                    dbc.Tab(label='Общая ЭВ',
-                                            children=
-                                            dcc.Loading(
-                                                dcc.Graph(id='map',
-                                                          config=config,
-                                                          className='map'),
-                                            type="circle"))
-                                ], className='tabs')
-                            ], className='tabs-container shadow p-3 mb-5 bg-white rounded'),
+                                    dcc.Loading(
+                                        dcc.Graph(id='map',
+                                                  config=config,
+                                                  className='map'),
+                                    type="circle")
+                            ], className='map-container shadow p-3 mb-5 bg-white rounded'),
 
                         xs=10, sm=8, md=10, lg=7),
                     dbc.Col(
@@ -134,7 +135,6 @@ def make_mobile_layout(month_list):
                 ], justify="center"),
                 dcc.Store(id='store-data', storage_type='session'),
                 dcc.Store(id='store-chart-data', storage_type='session'),
-                # dcc.Store(id='interval-data', storage_type='session')
             ], className='app-div-container')
 
     return layout

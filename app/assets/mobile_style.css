@@ -21,6 +21,7 @@ margin: 10px 20px 20px 20px;
 font-size: 2vi
 }
 
+
 .dropdown-filter-label{
 margin-top: 20px;
 margin-left: 20px
@@ -61,7 +62,7 @@ background-color: white
 
 
 .map{
-height: 100%
+height: 64vh
 }
 
 .int-map-slider{
@@ -73,6 +74,9 @@ background-color: white;
 
 }
 
+.map-container{
+height: 70vh;
+}
 
 .bar-chart-h{
 height: 70vh;

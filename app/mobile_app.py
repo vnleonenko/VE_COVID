@@ -1,11 +1,13 @@
 from copy import deepcopy
 import random as rnd
 
-import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
 from dash import Dash, Input, Output
+import dash_bootstrap_components as dbc
 import pandas as pd
 
 from interval_utils import get_interval_data, convert_date_format
+from VE_COVID.calculations.ve.utils import connect_to_db, query_to_df
 from mobile_layout import make_mobile_layout
 from utils import get_subjects, parse_csv
 
@@ -14,6 +16,7 @@ from graphs import plot_choropleth_map
 import plotly.graph_objects as go
 
 
+cnxn, cursor = connect_to_db()
 geojson_path = r'./data/map_data/subjects_borders_of_russia.json'
 subjects = get_subjects(geojson_path)
 
@@ -27,11 +30,20 @@ ru_en_month = dict(январь='01', февраль='02', март='03',
                    октябрь='10', ноябрь='11', декабрь='12')
 en_ru_month = {v: k for k, v in ru_en_month.items()}
 
-month_list = []
+month_dict = {}
 for data_point in pd.unique(bar_chart_general_ve['data_point']):
-    data_point = data_point.split('_')[0]
-    year, month = data_point.split('.')
-    month_list.append(f'{en_ru_month[month]} {year} г.')
+    date = data_point.split('_')[0]
+    year, month = date.split('.')
+    month_dict.update({f'{en_ru_month[month]} {year} г.': data_point})
+
+columns = ['data_point', 'region', 'vac_interval_group', 'vaccine']
+ages = ['_18_59', '_60', '_total']
+cases = ['_zab', '_hosp', '_severe', '_death']
+prefix = ['ve', 'cil', 'cih']
+for age in ages:
+    for case in cases:
+        for pref in prefix:
+            columns.append(pref+case+age)
 
 
 int_data_folder_path = './data/input_csv_files/interval'
@@ -46,7 +58,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                        'content': 'width=device-width, initial-scale=0.9, maximum-scale=1.1,'
                                   'minimum-scale=0.5'}])
 server = app.server
-app.layout = make_mobile_layout(month_list)
+app.layout = make_mobile_layout(month_dict)
 
 
 @app.callback(
@@ -130,10 +142,13 @@ def update_bar_chart(stored_data, vac_type, case, age, date_ru):
     Input('disease_severity', 'value'),
     Input('age_group', 'value'),
     Input('month_year', 'value'),
+    Input('map-checklist', 'value')
 )
-def update_map(stored_data, vac_type, case, age, date_ru):
+def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
     stored_data = pd.DataFrame(stored_data)
     stored_data.fillna(0.0, axis=1, inplace=True)
+    if len(update_fig) == 0:
+        raise PreventUpdate
 
     case_prefix = case
     title_case = ''
@@ -174,6 +189,7 @@ def update_map(stored_data, vac_type, case, age, date_ru):
     Input('month_year_int', 'value')
 )
 def update_interval_bar_chart(vac_type, case, age, dates_list):
+    print('dates_list', dates_list)
     converted_dates = sorted(convert_date_format(dates_list),
                              key=lambda x: x.split("."))
 
@@ -201,11 +217,21 @@ def update_interval_bar_chart(vac_type, case, age, dates_list):
     column = 've_' + case_prefix + age_prefix
     ci_high_title = 'cih_' + case_prefix + age_prefix
     ci_low_title = 'cil_' + case_prefix + age_prefix
-    chart_data = interval_data[interval_data['vaccine'] == vaccines_ru_en[vac_type]]
+    # chart_data = interval_data[interval_data['vaccine'] == vaccines_ru_en[vac_type]]
 
-    '''query = fselect * from dbo.VE_W_VAC_INT
-            where vaccine = {vaccines_ru_en[vac_type]} and 
-            '''
+    months = [month_dict.get(d) for d in dates_list]
+    if len(months) == 1:
+        months = f"('{months[0]}')"
+    elif len(months) < 1:
+        months = f"('')"
+    else:
+        months = tuple(months)
+    print('months', months)
+    query = f'''select * from dbo.VE_W_VAC_INT
+            where vaccine = '{vaccines_ru_en[vac_type]}' and data_point in {months}'''
+
+    chart_data = query_to_df(query, cursor, columns)
+    print(chart_data.tail())
 
     fig = go.Figure()
     vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
@@ -222,9 +248,9 @@ def update_interval_bar_chart(vac_type, case, age, dates_list):
         cih = y[ci_high_title] - y[column]
         cil = y[column] - y[ci_low_title]
         title_text = f'ЭВ в отношении предотвращения {title_case} COVID-19<br>({vac_type}, {age})'
-        color = [rnd.randint(150, 200), rnd.randint(150, 200), rnd.randint(200, 255)]
+        color = [rnd.randint(150, 200), rnd.randint(150, 200), rnd.randint(150, 255)]
         fig.add_trace(go.Bar(x=x, y=y[column], width=0.6,
-                             #marker={'color': f'rgb{color[0], color[1], color[2]}'},
+                             marker={'color': f'rgb{color[0], color[1], color[2]}'},
                              showlegend=False,
                              error_y=dict(type='data',
                                           symmetric=False,

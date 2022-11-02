@@ -53,6 +53,8 @@ def compute_ve_conf_int(inf_vac_data, ppv_data):
         glm = smf.glm(formula='y ~ 1', data=df, offset=df['logit_ppv'],
                       family=sm.families.Binomial())
         glm_res = glm.fit()
+        p = glm_res.params
+
         ve_estimation = round(1 - np.exp(glm_res.params).values[0], 5)
         ci = [round(ci, 5) for ci in 1 - np.exp(glm_res.conf_int(alpha=0.05)).values[0]]
         print(ve_estimation, *ci)
