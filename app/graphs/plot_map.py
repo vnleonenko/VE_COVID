@@ -13,7 +13,8 @@ map_colorbar = { 'bgcolor': 'white',
                  'len': 0.7,
                  'title': {'text': 'ЭB',
                            'font': {'size': 15}}}
-map_colorscale = [(0, "#4d56b3"), (0.5, "#ffffff"), (1, "#81c662")]
+map_colorscale = [(0, "#c4c4c4"), (0.25, "#c4c4c4"), (0.5, "#c4c4c4"),
+                  (0.65, "#ff3333"), (0.85, "#ffff66"), (1, "#81c662")]
 
 
 def plot_choropleth_map(borders, data, column_label, locations_label, title_text):
@@ -21,6 +22,9 @@ def plot_choropleth_map(borders, data, column_label, locations_label, title_text
                                                locations=data[locations_label],
                                                featureidkey='properties.'+locations_label,
                                                z=data[column_label],
+                                               #zmin=data[column_label].min(),
+                                               #zmax=data[column_label].max(),
+                                               zmid=0,
                                                colorscale=map_colorscale,
                                                hovertemplate=' Субъект: %{location}<br> '
                                                              'ЭВ: %{z:.1%}<extra></extra>',
@@ -32,9 +36,9 @@ def plot_choropleth_map(borders, data, column_label, locations_label, title_text
                              paper_bgcolor='white',
                              plot_bgcolor='white',
                              mapbox=dict(center=dict(lat=70, lon=105), zoom=1.4),
-                             margin={"r": 0, "t": 80, "l": 0, "b": 0},
+                             margin={"r": 0, "t": 120, "l": 0, "b": 0},
                              title={'text': title_text, 'font_color': 'black',
-                                    'x': 0.5, 'y': 0.95, 'xanchor': 'center', 'yanchor': 'top'},
+                                    'x': 0.5, 'y': 0.88, 'xanchor': 'center', 'yanchor': 'top'},
                              title_font_size=14)
     map_figure.update_geos(fitbounds="locations")
     return map_figure
