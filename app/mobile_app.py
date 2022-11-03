@@ -6,8 +6,7 @@ from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from interval_utils import get_interval_data, convert_date_format
-from calculations.ve.utils import connect_to_db, query_to_df
+from interval_utils import get_interval_data, convert_date_format, connect_to_db, query_to_df
 from mobile_layout import make_mobile_layout
 from utils import get_subjects, parse_csv
 
@@ -189,7 +188,6 @@ def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
     Input('month_year_int', 'value')
 )
 def update_interval_bar_chart(vac_type, case, age, dates_list):
-    print('dates_list', dates_list)
     converted_dates = sorted(convert_date_format(dates_list),
                              key=lambda x: x.split("."))
 
