@@ -1,5 +1,6 @@
 from utils import parse_csv
 import pandas as pd
+import pyodbc
 import os
 
 
@@ -39,4 +40,18 @@ def convert_date_format(date_list):
     return converted_dates
 
 
+def connect_to_db():
+    server = 'tcp:db.influenza.spb.ru,1984'
+    database = 'VE'
+    username = 've_access'
+    password = 'VE@niiGrippa4$'
+    cnxn = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};'
+                          'SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+password,
+                          autocommit=True)
+    return cnxn, cnxn.cursor()
+
+
+def query_to_df(query, cursor, columns):
+    query_res = list(map(list, cursor.execute(query).fetchall()))
+    return pd.DataFrame(query_res, columns=columns)
 
