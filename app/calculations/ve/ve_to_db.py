@@ -8,7 +8,7 @@ import os
 
 cnxn, crs = connect_to_db()
 
-int_ve_folder_path = '../../app/data/input_csv_files/interval'
+int_ve_folder_path = '../../data/input_csv_files/interval'
 columns = ','.join(('data_point', 'region', 'vac_interval_group', 'vaccine',
                     've_zab_18_59', 'cil_zab_18_59', 'cih_zab_18_59',
                     've_hosp_18_59', 'cil_hosp_18_59', 'cih_hosp_18_59',
