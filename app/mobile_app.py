@@ -6,9 +6,9 @@ from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from interval_utils import get_interval_data, convert_date_format, connect_to_db, query_to_df
-from mobile_layout import make_mobile_layout
-from utils import get_subjects, parse_csv
+from .interval_utils import get_interval_data, convert_date_format, connect_to_db, query_to_df
+from .mobile_layout import make_mobile_layout
+from .utils import get_subjects, parse_csv
 
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart
 from graphs import plot_choropleth_map
