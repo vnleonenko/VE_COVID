@@ -14,8 +14,8 @@ covid_cases = [{'label': 'заразившиеся', 'value': 'zab'},
 modeBarButtonsToRemove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
 config = dict(displaylogo=False,  responsive=True,  modeBarButtonsToRemove=modeBarButtonsToRemove)
 
-int_data_folder_path = './data/input_csv_files/interval'
-dates_list = iu.get_months(int_data_folder_path)
+# int_data_folder_path = './data/input_csv_files/interval'
+# dates_list = iu.get_months(int_data_folder_path)
 subjects = {'РФ': 'Российская Федерация',
             'г. Санкт-Петербург': 'г. Санкт-Петербург',
             'Московская область': 'Московская область'}
