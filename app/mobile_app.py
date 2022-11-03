@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 from interval_utils import get_interval_data, convert_date_format
-from VE_COVID.calculations.ve.utils import connect_to_db, query_to_df
+from calculations.ve.utils import connect_to_db, query_to_df
 from mobile_layout import make_mobile_layout
 from utils import get_subjects, parse_csv
 
