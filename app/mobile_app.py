@@ -10,8 +10,8 @@ from .interval_utils import get_interval_data, convert_date_format, connect_to_d
 from .mobile_layout import make_mobile_layout
 from .utils import get_subjects, parse_csv
 
-from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart
-from graphs import plot_choropleth_map
+from .graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart
+from .graphs import plot_choropleth_map
 import plotly.graph_objects as go
 
 
