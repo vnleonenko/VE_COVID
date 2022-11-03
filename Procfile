@@ -1,0 +1,1 @@
+web: gunicorn app.mobile_app:server

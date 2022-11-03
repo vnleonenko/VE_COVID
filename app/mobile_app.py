@@ -189,7 +189,6 @@ def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
     Input('month_year_int', 'value')
 )
 def update_interval_bar_chart(vac_type, case, age, dates_list):
-    print('dates_list', dates_list)
     converted_dates = sorted(convert_date_format(dates_list),
                              key=lambda x: x.split("."))
 
@@ -226,12 +225,10 @@ def update_interval_bar_chart(vac_type, case, age, dates_list):
         months = f"('')"
     else:
         months = tuple(months)
-    print('months', months)
     query = f'''select * from dbo.VE_W_VAC_INT
             where vaccine = '{vaccines_ru_en[vac_type]}' and data_point in {months}'''
 
     chart_data = query_to_df(query, cursor, columns)
-    print(chart_data.tail())
 
     fig = go.Figure()
     vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
