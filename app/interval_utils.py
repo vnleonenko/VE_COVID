@@ -1,4 +1,4 @@
-from utils import parse_csv
+from .utils import parse_csv
 import pandas as pd
 import pyodbc
 import os
