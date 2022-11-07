@@ -44,11 +44,7 @@ def get_general_ve(data_points, crs):
 
 if __name__ == '__main__':
     cursor = connect_to_db()
-    data_points_query = '''
-    select distinct(data_point) 
-    from dbo.ZAB_VAC
-    where data_point not like '%[B]%' 
-    '''
+    data_points_query = '''select distinct(data_point) from dbo.ZAB_VAC where data_point not like '%[B]%' '''
     data_points = [data_point[0] for data_point in cursor.execute(data_points_query).fetchall()]
     ve = get_general_ve(data_points, cursor)
     ve.to_csv('../../app/data/input_csv_files/general/general_ve.csv', sep=';',

@@ -1,4 +1,5 @@
 from .plot_bar_chart import plot_horizontal_bar_chart
 from .plot_bar_chart import plot_vertical_bar_chart
+from .plot_bar_chart import plot_int_bar_chart
 from .plot_map import plot_choropleth_map
 
