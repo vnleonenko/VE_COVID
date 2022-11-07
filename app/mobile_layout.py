@@ -1,7 +1,6 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import html, dcc
-# import interval_utils as iu
 
 
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
