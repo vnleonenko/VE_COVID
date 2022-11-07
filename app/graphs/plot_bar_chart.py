@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import pandas as pd
 
 
 def plot_vertical_bar_chart(x, y, ci, title_text):
@@ -56,5 +57,44 @@ def plot_horizontal_bar_chart(x, y, title_text):
                                    'font': {'size': 14}},
                             title_font_size=14)
     return bar_chart
+
+
+def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
+    fig = go.Figure()
+    vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
+                     '75_90_days': '75-90 дней', '90_105_days': '90-105 дней',
+                     '105_165_days': '105-165 дней', '165_195_days': '165-195 дней'}
+    for date in dates:
+        date = date.split("_")[0].split(".")
+        y = data[data['data_point'].str.contains(".".join(date))]
+        inversed_date = ".".join(date[::-1])
+        x = [[inversed_date for _ in range(len(vac_intervals))], list(vac_intervals.values())]
+        y.reset_index(drop=True, inplace=True)
+        y = pd.concat([y.iloc[2:, :], y.loc[:1, :]])
+        y = y[[column_title, ci_titles[1], ci_titles[0]]]
+        cih = y[ci_titles[1]] - y[column_title]
+        cil = y[column_title] - y[ci_titles[0]]
+        bar_chart = go.Bar(x=x, y=y[column_title], width=0.6, showlegend=False,
+                           marker={'color': y[column_title].fillna(0),
+                                   'colorscale': [(0, "#c4c4c4"), (0.25, "#ff3333"),
+                                                  (0.5, "#ffff66"), (1, "#81c662")],
+                                   'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
+                           error_y=dict(type='data',
+                                        symmetric=False,
+                                        array=cih,
+                                        arrayminus=cil,
+                                        width=3,
+                                        thickness=1.6),
+                           hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
+                                         "+%{error_y.array:.1%} "
+                                         "/ -%{error_y.arrayminus:.1%} "
+                                         "<extra></extra>")
+        fig.add_trace(bar_chart)
+        fig.update_yaxes(tickformat='.0%')
+        fig.update_layout(autosize=False, separators=',', template='plotly_white',
+                          margin={'l': 30, 'b': 25, 't': 90, 'r': 20}, title={'text': title_text, 'x': 0.5, 'y': 0.95,
+                                                                              'xanchor': 'center', 'yanchor': 'top',
+                                                                              'font': {'size': 15}})
+    return fig
 
 

@@ -1,28 +1,25 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import html, dcc
-import interval_utils as iu
+# import interval_utils as iu
 
 
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
-age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'все']
+age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'от 18 лет и старше']
 covid_cases = [{'label': 'заразившиеся', 'value': 'zab'},
-               {'label': 'с тяжелой формой', 'value': 'tyazh'},
-               {'label': 'госпитализированные', 'value': 'st'},
-               {'label': 'умершие', 'value': 'sm'}]
+               {'label': 'с тяжелой формой', 'value': 'severe'},
+               {'label': 'госпитализированные', 'value': 'hosp'},
+               {'label': 'умершие', 'value': 'death'}]
 
 modeBarButtonsToRemove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
 config = dict(displaylogo=False,  responsive=True,  modeBarButtonsToRemove=modeBarButtonsToRemove)
 
-int_data_folder_path = './data/input_csv_files/interval'
-dates_list = iu.get_months(int_data_folder_path)
-subjects = {'РФ': 'Российская Федерация',
-            'г. Санкт-Петербург': 'г. Санкт-Петербург',
-            'Московская область': 'Московская область'}
+subjects = [{'label': 'Российская Федерация', 'value': 'РФ', },
+            {'label': 'г. Санкт-Петербург', 'value': 'г. Санкт-Петербург', },
+            {'label': 'Московская область', 'value': 'Московская область', }]
 
 
-def make_mobile_layout(month_dict):
-    month_list = list(month_dict.keys())
+def make_mobile_layout():
     layout = html.Div([
                 dbc.Row(
                     dbc.Col(
@@ -42,8 +39,8 @@ def make_mobile_layout(month_dict):
                             html.H5('Фильтры', className='dropdown-filter-label'),
                             html.Hr(className='dropdown'),
                             html.Label(children='Субъект', className='dropdown-label'),
-                            dcc.Dropdown(list(subjects.values()),
-                                         value='Российская Федерация',
+                            dcc.Dropdown(subjects,
+                                         value='РФ',
                                          id='subject',
                                          clearable=False,
                                          className='dropdown'),
@@ -52,7 +49,6 @@ def make_mobile_layout(month_dict):
                                          value='Спутник V',
                                          id='vaccine_type',
                                          clearable=False,
-
                                          className='dropdown'),
                             html.Label(children='Возрастная группа', className='dropdown-label'),
                             dcc.Dropdown(age_groups,
@@ -70,30 +66,24 @@ def make_mobile_layout(month_dict):
                                            inline=True,
                                            className='dropdown'),
                             html.Label('Месяц и год', className='dropdown-label'),
-                            dcc.Dropdown(options=month_list,
-                                         value=month_list[0],
-                                         id='month_year',
+                            dcc.Dropdown(id='month_year',
                                          clearable=False,
                                          className='dropdown'),
                             html.Label('Месяц и год для интервальной ЭВ ', className='dropdown-label'),
                             dmc.MultiSelect(
                                 description="Выберите до 4х различных месяцев",
-                                data=sorted(month_list, key=lambda x: x.split(".")[1]),
-                                value=month_list[1:3],
                                 maxSelectedValues=4,
                                 zIndex=100,
                                 id='month_year_int',
-                                style={'width': '18vw', 'height': '5%', 'margin': '10px 30px 20px 20px',
-                                       'fontSize': '20vi', 'fontFamily': 'Helvetica'}
-                            ),
+                                style={'height': '7%', 'margin': '10px 30px 20px 20px',
+                                       'fontSize': '20vi', 'fontFamily': 'Helvetica'}),
                             dcc.Checklist(options=[{'label': 'Изменять карту',
                                                     'value': True}],
                                           value=[True],
                                           id='map-checklist',
                                           className='dropdown',
                                           inputStyle={"margin-right": 15,
-                                                      "margin-top": 20},
-                                          )
+                                                      "margin-top": 25})
                         ], className='dropdown-container shadow p-3 mb-5 bg-white rounded'),
                     ],  xs=10, sm=8, md=10, lg=3),
 
@@ -135,6 +125,7 @@ def make_mobile_layout(month_dict):
                 ], justify="center"),
                 dcc.Store(id='store-data', storage_type='session'),
                 dcc.Store(id='store-chart-data', storage_type='session'),
+                dcc.Store(id='store-int-data', storage_type='session')
             ], className='app-div-container')
 
     return layout
