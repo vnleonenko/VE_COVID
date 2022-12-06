@@ -1,11 +1,13 @@
 from dash.exceptions import PreventUpdate
 from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
+
 import pandas as pd
+import plotly.graph_objects as go
 
 from database_connector import MSSQL
 from mobile_layout import make_mobile_layout
-from utils import get_subjects, reformat_date
+from utils import get_subjects, reformat_date, get_strain_data
 
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart, plot_int_bar_chart
 from graphs import plot_choropleth_map
@@ -13,6 +15,8 @@ from graphs import plot_choropleth_map
 
 geojson_path = r'data/map_data/subject_borders_of_russia.json'
 subjects = get_subjects(geojson_path)
+strain_data = get_strain_data('data/strains/20221020-MH93845-490.csv')
+
 
 vaccines_dict = {'Все вакцины': 'AllVaccines',
                  'Спутник V': 'SputnikV',
@@ -44,10 +48,10 @@ app.layout = make_mobile_layout()
     Output('month_year_int', 'value'),
     Input('subject', 'value'),
 )
-def update_store(subject):
+def update_storage(subject):
     with MSSQL() as mssql:
         general_ve_df = mssql.extract_general_ve()
-        months = reformat_date(general_ve_df['data_point'].unique())
+        months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')
 
         general_ve_map = general_ve_df[general_ve_df['region'] != 'РФ'].to_dict('records')
         general_ve_chart = general_ve_df[general_ve_df['region'] == subject].to_dict('records')
@@ -60,7 +64,7 @@ def update_store(subject):
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
 )
-def update_int_store(subject, vac_type):
+def update_int_storage(subject, vac_type):
     vaccine = vaccines_dict[vac_type]
     with MSSQL() as mssql:
         int_ve_df = mssql.extract_int_ve(vaccine, subject).to_dict('records')
@@ -156,6 +160,48 @@ def update_interval_bar_chart(data, subject, vac_type, case, age, dates_list):
     fig = plot_int_bar_chart(chart_data, converted_dates, column, [ci_low_title, ci_high_title], title_text)
 
     return fig
+
+
+@app.callback(
+    Output('pie-chart', 'figure'),
+    Output('strain_month_year', 'options'),
+    Input('strain_month_year', 'value'),
+    Input('subject', 'value')
+)
+def update_pie_chart(date, subject):
+    strain_dates = strain_data['collection_date'].unique()
+    initial_date = strain_dates[0]
+    subject_en = ''
+    if subject == 'РФ':
+        subject_en = 'Russian Federation'
+    elif subject == 'г. Санкт-Петербург':
+        subject_en = 'Saint Petersburg'
+    elif subject == 'Московская область':
+        subject_en = 'Moscow'
+
+    print(subject_en)
+    pie_chart_data = strain_data.query(f'collection_date == "{date}" & subject == "{subject_en}"')
+    print(pie_chart_data)
+
+    strain_dates_ru = reformat_date(strain_dates.tolist(), delimiter='-')
+    date_options = [{'label': l, 'value': v} for l, v in zip(strain_dates_ru, strain_dates)]
+    if pie_chart_data.shape[0] == 0:
+        labels = ['Данные отсутствуют']
+        values = [1]
+        show_text = 'none'
+    else:
+        labels = list(pie_chart_data['pango_lineage'].values[0].keys())
+        values = list(pie_chart_data['pango_lineage'].values[0].values())
+        show_text = 'inside'
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values,
+                                 hovertemplate="%{label}<br>%{percent}"
+                                               "<extra></extra>")])
+    fig.update_traces(textposition=show_text)
+    fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide')
+    fig.update_layout(autosize=False, separators=',', template='plotly_white',
+                      margin={'l': 0, 'b': 20, 't': 50, 'r': 20})
+
+    return [fig, date_options]
 
 
 if __name__ == '__main__':
