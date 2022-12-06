@@ -5,7 +5,7 @@ from dash import html, dcc
 
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
 age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'от 18 лет и старше']
-covid_cases = [{'label': 'заразившиеся', 'value': 'zab'},
+covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
                {'label': 'с тяжелой формой', 'value': 'severe'},
                {'label': 'госпитализированные', 'value': 'hosp'},
                {'label': 'умершие', 'value': 'death'}]
@@ -60,8 +60,8 @@ def make_mobile_layout():
                                            value='zab',
                                            id='disease_severity',
                                            labelStyle={'display': 'block'},
-                                           inputStyle={"margin-right": "5px",
-                                                       "margin-left": "15px"},
+                                           inputStyle={"marginRight": "5px",
+                                                       "marginLeft": "15px"},
                                            inline=True,
                                            className='dropdown'),
                             html.Label('Месяц и год', className='dropdown-label'),
@@ -81,8 +81,8 @@ def make_mobile_layout():
                                           value=[True],
                                           id='map-checklist',
                                           className='dropdown',
-                                          inputStyle={"margin-right": 15,
-                                                      "margin-top": 25})
+                                          inputStyle={"marginRight": 15,
+                                                      "marginTop": 25})
                         ], className='dropdown-container shadow p-3 mb-5 bg-white rounded'),
                     ],  xs=10, sm=8, md=10, lg=3),
 
@@ -99,8 +99,23 @@ def make_mobile_layout():
                                                             config=config,
                                                             className='int-bar-chart')]),
                                 dbc.Tab(label='Штаммы',
-                                        children=[html.Div('Данные отсутствуют',
-                                                           className='strains-graph')])
+                                        children=[
+                                            dbc.Row([
+                                                dbc.Col([
+                                                    html.Label('Выберите месяц и год',
+                                                                className='strain-dropdown-label'),
+                                                    dcc.Dropdown(id='strain_month_year',
+                                                                value='2020-02',
+                                                                clearable=False,
+                                                                className='dropdown')
+                                                ], xs=10, sm=2, md=2, lg=3),
+                                                dbc.Col([
+                                                    dcc.Graph(id='pie-chart',
+                                                          config=config,
+                                                          className='strains-graph')
+                                                ], xs=12, sm=6, md=10, lg=9)
+                                            ])
+                                        ])
                             ], className='tabs')
                         ], className='tabs-container shadow p-3 mb-5 bg-white rounded'),
                     ], xs=10, sm=8, md=10, lg=7),

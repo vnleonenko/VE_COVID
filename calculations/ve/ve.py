@@ -11,41 +11,13 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 
 
-def compute_ve(pcv, ppv):
-    ve_columns = ['data_point', 'region', 'vac_interval_group', 'vaccine',
-                  've_zab_18_59', 've_hosp_18_59', 've_severe_18_59', 've_death_18_59',
-                  've_zab_60', 've_hosp_60', 've_severe_60', 've_death_60',
-                  've_zab_total', 've_hosp_total', 've_severe_total', 've_death_total']
-    ve_df = pd.DataFrame(columns=ve_columns)
-    merged_pcv_ppv = ppv.merge(pcv, on=['data_point', 'region', 'vac_interval_group', 'vaccine'],
-                               how='outer')
-    for ve_column in ve_columns:
-        if ve_column in pcv.columns and ve_column in ppv.columns:
-            ve_df[ve_column] = merged_pcv_ppv[ve_column]
-        else:
-            if '18_59' in ve_column:
-                age = '_18_59'
-            elif '60' in ve_column:
-                age = '_60'
-            else:
-                age = '_total'
-            case = ve_column.split('_')[1]
-            factor_pcv = merged_pcv_ppv['pcv_' + case + age] / (1 - merged_pcv_ppv['pcv_' + case + age])
-            factor_ppv = (1 - merged_pcv_ppv['ppv' + age]) / merged_pcv_ppv['ppv' + age]
-            ve_df[ve_column] = round(1 - (factor_pcv * factor_ppv), 5)
-
-    return ve_df
-
-
-def compute_ve_conf_int(inf_vac_data, ppv_data):
-    def interim_df(args):
+def compute_ve(inf_vac_data, ppv_data):
+    def get_ve_w_ci(args):
         # print(args)
         case, vac_case, ppv = int(args[0]), int(args[1]), args[2]
-        print('case', case, 'vac_case', vac_case, 'ppv', ppv)
         df = pd.DataFrame(columns=['case', 'vac_case', 'ppv'])
         df['y'] = [1 if (i <= vac_case) and (i != 0) else 0 for i in range(case)]
         if ppv == 0:
-            print(np.nan, np.nan, np.nan)
             return np.nan, np.nan, np.nan
 
         df['logit_ppv'] = np.log(ppv / (1 - ppv))
@@ -53,11 +25,8 @@ def compute_ve_conf_int(inf_vac_data, ppv_data):
         glm = smf.glm(formula='y ~ 1', data=df, offset=df['logit_ppv'],
                       family=sm.families.Binomial())
         glm_res = glm.fit()
-        p = glm_res.params
-
         ve_estimation = round(1 - np.exp(glm_res.params).values[0], 5)
         ci = [round(ci, 5) for ci in 1 - np.exp(glm_res.conf_int(alpha=0.05)).values[0]]
-        print(ve_estimation, *ci)
         return ve_estimation, ci[1], ci[0]
 
     merged_df = ppv_data.merge(inf_vac_data, on=['data_point', 'region', 'vac_interval_group', 'vaccine'], how='outer')
@@ -82,7 +51,7 @@ def compute_ve_conf_int(inf_vac_data, ppv_data):
         cil_column = 'cil_' + ca
         cih_column = 'cih_' + ca
         ve_df[[ve_column, cil_column, cih_column]] = \
-            merged_df_cut[[inf_column, inf_vac_column, ppv_column]].apply(lambda x: interim_df(x) if np.all(x[:2]) != 0
+            merged_df_cut[[inf_column, inf_vac_column, ppv_column]].apply(lambda x: get_ve_w_ci(x) if np.all(x[:2]) != 0
         else [np.nan, np.nan, np.nan], axis=1, result_type="expand")
     ve_df.to_csv(f'calculations/output/jan22/{merged_df_cut["data_point"][0]}_ve_w_ci.csv',
                  sep=';', index=False, encoding='cp1251', na_rep='NULL')
@@ -90,7 +59,6 @@ def compute_ve_conf_int(inf_vac_data, ppv_data):
 
 
 def main():
-
     inf_vac_q = inf_vaccinated_3_age_groups()
     inf_q = infected_3_age_groups()
     vac_q = vaccinated_3_age_groups()
@@ -125,29 +93,17 @@ def main():
     inf_vac_grouped_df = inf_vac_grouped_df.merge(inf_grouped_df,
                                                   on=['data_point', 'region'],
                                                   how='left')
-    relative_risks = compute_relative_risks(inf_vac_grouped_df)
-    visualize_relative_risks(relative_risks,  'SputnikV', 'РФ')
 
     vac_grouped_df = add_aggregated_data(vac_df, ['data_point', 'vac_interval_group', 'vaccine'],
                                          ['data_point', 'region', 'vac_interval_group'])
     vac_pop_grouped_df = vac_grouped_df.merge(pop_df, on='region', how='left')
     ppv_df = compute_ppv(vac_pop_grouped_df)
 
-    '''vac_pop_grouped_df.to_csv('calculations/output/vac_pop.csv', sep=';', index=False,
-                              encoding='cp1251', na_rep='NULL')
-    inf_vac_grouped_df.to_csv('calculations/output/inf_vac.csv', sep=';', index=False,
-                              encoding='cp1251', na_rep='NULL')
-    ppv_df.to_csv('calculations/output/ppv.csv', sep=';', index=False,
-                  encoding='cp1251', na_rep='NULL')'''
+    inf_vac_grouped_cut_df = inf_vac_grouped_df.loc[inf_vac_grouped_df['data_point'] == '2021.11_01-07-2022']
+    ppv_cut_df = ppv_df.loc[ppv_df['data_point'] == '2021.11_01-07-2022']
 
-    '''
-    inf_vac_grouped_cut_df.to_csv('calculations/output/inf_vac_cut.csv', sep=';', index=False, encoding='cp1251',
-                                  na_rep='NULL')
-    '''
-
-    inf_vac_grouped_cut_df = inf_vac_grouped_df.loc[inf_vac_grouped_df['data_point'] == '2021.12_13-10-2022']
-    ppv_cut_df = ppv_df.loc[ppv_df['data_point'] == '2021.12_13-10-2022']
-    # '2022.02_01-07-2022', '2021.11_01-07-2022', '2022.07_16-08-2022'
+    # visualize_relative_risks(relative_risks,  'SputnikV', 'РФ')
+    # relative_risks = compute_relative_risks(inf_vac_grouped_df)
 
     # pcv_df = compute_pcv(inf_vac_grouped_cut_df)
     # pcv_cut_df = pcv_df.loc[pcv_df['data_point'] == '2022.02_01-07-2022']
@@ -155,7 +111,8 @@ def main():
     # ve = compute_ve(pcv_cut_df, ppv_cut_df)
     # ve.to_csv('calculations/output/ve_feb22.csv', sep=';', index=False, encoding='cp1251', na_rep='NULL')
 
-    ve_conf_int = compute_ve_conf_int(inf_vac_grouped_cut_df, ppv_cut_df)
+    ve_conf_int = compute_ve(inf_vac_grouped_cut_df, ppv_cut_df)
+    cnxn.close()
 
 
 if __name__ == '__main__':

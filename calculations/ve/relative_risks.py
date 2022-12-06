@@ -92,4 +92,3 @@ def visualize_relative_risks(df, vaccine, subject):
                                  height=500, width=1500)
 
     figure.write_image(f"./риски_{subject}_{vaccines_en_ru[vaccine]}.png", engine="kaleido")
-    print(' ')
