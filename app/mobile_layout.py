@@ -6,8 +6,8 @@ from dash import html, dcc
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
 age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'от 18 лет и старше']
 covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
-               {'label': 'с тяжелой формой', 'value': 'severe'},
                {'label': 'госпитализированные', 'value': 'hosp'},
+               {'label': 'с тяжелой формой', 'value': 'severe'},
                {'label': 'умершие', 'value': 'death'}]
 
 modeBarButtonsToRemove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
@@ -91,13 +91,53 @@ def make_mobile_layout():
                         html.Div([
                             dbc.Tabs([
                                 dbc.Tab(label='Общая ЭВ',
-                                        children=[dcc.Graph(id='bar_chart_v',
+                                        children=[dbc.Row([
+                                            dbc.Col([
+                                                dcc.Graph(id='bar_chart_v',
+                                                          config=config,
+                                                          className='bar-chart-v')
+                                            ], xs={'size': 10, 'offset': 1},
+                                                sm={'size': 10, 'offset': 1},
+                                                md={'size': 10, 'offset': 1},
+                                                lg={'size': 10, 'offset': 1})
+                                        ])
+                                        ]),
+                                dbc.Tab(label='Интервальная ЭВ1',
+                                        children=[dbc.Row([
+                                            dbc.Col([
+                                                dcc.Graph(id='interval_bar_chart',
+                                                          config=config,
+                                                          className='int-bar-chart')
+                                            ], xs={'size': 10, 'offset': 1},
+                                               sm={'size': 10, 'offset': 1},
+                                               md={'size': 10, 'offset': 1},
+                                               lg={'size': 10, 'offset': 1})
+                                        ])]),
+                                dbc.Tab(label='Интервальная ЭВ2',
+                                        children=[
+                                            dbc.Row([
+                                                    dbc.Col([
+                                                        dcc.Graph(id='interval_bar_chart2',
                                                             config=config,
-                                                            className='bar-chart-v')]),
-                                dbc.Tab(label='Интервальная ЭВ',
-                                        children=[dcc.Graph(id='interval_bar_chart',
-                                                            config=config,
-                                                            className='int-bar-chart')]),
+                                                            className='int-bar-chart2'),
+                                                        html.Div('Выберите возрастную группу',
+                                                                 style={'marginLeft': 20,
+                                                                        'marginBottom': 10}),
+                                                        dcc.Slider(0, 6, 1, value=0,
+                                                                   marks={0: '20-29',
+                                                                          1: '30-39',
+                                                                          2: '40-49',
+                                                                          3: '50-59',
+                                                                          4: '60-69',
+                                                                          5: '70-79',
+                                                                          6: '80+'},
+                                                                   id='age_slider')
+                                                    ], xs={'size': 10, 'offset': 1},
+                                                       sm={'size': 10, 'offset': 1},
+                                                       md={'size': 10, 'offset': 1},
+                                                       lg={'size': 10, 'offset': 1})
+                                            ])
+                                        ]),
                                 dbc.Tab(label='Штаммы',
                                         children=[
                                             dbc.Row([
@@ -108,12 +148,16 @@ def make_mobile_layout():
                                                                 value='2020-02',
                                                                 clearable=False,
                                                                 className='dropdown')
-                                                ], xs=10, sm=2, md=2, lg=3),
-                                                dbc.Col([
-                                                    dcc.Graph(id='pie-chart',
-                                                          config=config,
-                                                          className='strains-graph')
-                                                ], xs=12, sm=6, md=10, lg=9)
+                                                ], xs=10, sm=2, md=2,
+                                                    lg={'offset': 0, 'size': 3}),
+                                                dbc.Row([
+                                                    dbc.Col([
+                                                        dcc.Graph(id='pie-chart',
+                                                                  config=config,
+                                                                  className='strains-graph')
+                                                    ], xs=12, sm=6, md=10,
+                                                        lg={'offset': 1, 'size': 10})
+                                                ])
                                             ])
                                         ])
                             ], className='tabs')
