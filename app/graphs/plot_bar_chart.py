@@ -74,8 +74,21 @@ def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
         y = y[[column_title, ci_titles[1], ci_titles[0]]]
         cih = y[ci_titles[1]] - y[column_title]
         cil = y[column_title] - y[ci_titles[0]]
+        '''cil = y[ci_titles[0]]
+        y = y[column_title].fillna(0).tolist()
+        cil_values = [cil_ if y_/cil_ < 2 else 2*y_ for y_, cil_ in zip(y, cil)]
+        cil_points = [i-j for i, j in zip(y, cil_values)]'''
+        '''y_ = y[column_title].tolist()
+        cil_ = y[ci_titles[0]].tolist()
+        cil_ = [j if j/i < 2 else 2*i for i, j in zip(y_, cil_)]
+        print([j if j/i < 2 else 2*i for i, j in zip(y_, cil_)])
+        print(cil_)
+        print([j/i for i, j in zip(y_, cil_)])
+        print('y', y[column_title], '\n', 'cil', y[ci_titles[0]], '\n', 'cih', y[ci_titles[1]])
+        cil = [i - j for i, j in zip(y_, cil_)]'''
+
         bar_chart = go.Bar(x=x, y=y[column_title], width=0.6, showlegend=False,
-                           marker={'color': y[column_title].fillna(0),
+                           marker={'color': y[column_title],
                                    'colorscale': [(0, "#c4c4c4"), (0.25, "#ff3333"),
                                                   (0.5, "#ffff66"), (1, "#81c662")],
                                    'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
@@ -92,9 +105,10 @@ def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
         fig.add_trace(bar_chart)
         fig.update_yaxes(tickformat='.0%')
         fig.update_layout(autosize=False, separators=',', template='plotly_white',
-                          margin={'l': 30, 'b': 25, 't': 90, 'r': 20}, title={'text': title_text, 'x': 0.5, 'y': 0.95,
-                                                                              'xanchor': 'center', 'yanchor': 'top',
-                                                                              'font': {'size': 15}})
+                          margin={'l': 30, 'b': 25, 't': 90, 'r': 20},
+                          title={'text': title_text, 'x': 0.5, 'y': 0.95,
+                                 'xanchor': 'center', 'yanchor': 'top',
+                                 'font': {'size': 15}})
     return fig
 
 

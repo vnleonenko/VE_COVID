@@ -13,6 +13,10 @@ def main():
         vac_df = data_processor.query_to_df(*query_gen.query_vac_data())
         zab_vac_df = data_processor.query_to_df(*query_gen.query_zab_vac_data())
         pop_df = data_processor.query_to_df(*query_gen.query_pop_data())
+        zab_df.to_csv('../output/zab_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        vac_df.to_csv('../output/vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        zab_vac_df.to_csv('../output/zab_vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        pop_df.to_csv('../output/pop_df.csv', index=False, encoding='cp1251', na_rep='NULL')
 
     estimator = VEEstimator(zab_df, vac_df, zab_vac_df, pop_df)
     ve_df = estimator.compute_ve()
