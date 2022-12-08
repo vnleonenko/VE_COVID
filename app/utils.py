@@ -49,7 +49,6 @@ def reformat_date(dates, to_numeric=False, delimiter='.'):
                    '10': 'октябрь', '11': 'ноябрь', '12': 'декабрь'}
     inv_months_dict = {v: k for k, v in months_dict.items()}
     result = []
-
     for date in dates:
         if to_numeric:
             month, year, _ = date.split(" ")

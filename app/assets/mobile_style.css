@@ -53,6 +53,17 @@ height: 55vh;
 background-color: white
 }
 
+.int-bar-chart2{
+margin: 10px 20px 20px 20px;
+height: 50vh;
+background-color: white
+}
+
+.age-slider{
+width: 60vw;
+margin: 10px 40px 20px 40px;
+}
+
 .strain-dropdown-label{
 font-size: 4vi;
 margin-left: 20px;
@@ -62,11 +73,9 @@ margin-top: 30px;
 .strains-graph{
 margin: 20px 40px 10px 40px;
 vertical-align: middle;
-/*width: 35vw;*/
-height: 55vh;
-background-color: white
+width: 45vw;
+height: 45vh;
 }
-
 
 .map{
 height: 64vh
@@ -78,7 +87,6 @@ margin-left: 20px;
 margin-bottom: 50px;
 width: 95%;
 background-color: white;
-
 }
 
 .map-container{
