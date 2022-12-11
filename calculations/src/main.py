@@ -13,10 +13,17 @@ def main():
         vac_df = data_processor.query_to_df(*query_gen.query_vac_data())
         zab_vac_df = data_processor.query_to_df(*query_gen.query_zab_vac_data())
         pop_df = data_processor.query_to_df(*query_gen.query_pop_data())
+<<<<<<< HEAD
         '''zab_df.to_csv('../output/zab_df.csv', index=False, encoding='cp1251', na_rep='NULL')
         vac_df.to_csv('../output/vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
         zab_vac_df.to_csv('../output/zab_vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
         pop_df.to_csv('../output/pop_df.csv', index=False, encoding='cp1251', na_rep='NULL')'''
+=======
+        zab_df.to_csv('../output/zab_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        vac_df.to_csv('../output/vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        zab_vac_df.to_csv('../output/zab_vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+        pop_df.to_csv('../output/pop_df.csv', index=False, encoding='cp1251', na_rep='NULL')
+>>>>>>> c397820b4409472eeff9880e49522306a50f4895
 
     estimator = VEEstimator(zab_df, vac_df, zab_vac_df, pop_df)
     ppv = estimator._compute_ppv()
