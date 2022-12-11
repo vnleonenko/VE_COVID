@@ -40,6 +40,23 @@ class MSSQL:
 
         return df
 
+    @staticmethod
+    def _get_ve_columns2():
+        columns = ['data_point', 'region', 'age_group',
+                   'vac_interval_group', 'vaccine']
+        cases = ['zab', 'hosp', 'severe', 'death']
+        prefix = ['ve_', 'cil_', 'cih_']
+        for case in cases:
+            for pref in prefix:
+                columns.append(pref + case)
+        return columns
+
+    def extract_int_ve2(self, vaccine, subject):
+        query = f'''select * from dbo.VE_TEST where vaccine = ? and region = ? '''
+        df = self._query_to_df(query, self._get_ve_columns2(), vaccine, subject)
+
+        return df
+
     def extract_general_ve(self):
         query = f'''select sq1.data_point, sq1.region, sq1.vaccine_id as vaccine,
                     sum(ve_zab_18_59) as ve_zab_18_59,

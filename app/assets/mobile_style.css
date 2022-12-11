@@ -1,3 +1,9 @@
+.container-fluid{
+padding-left: 0px;
+padding-right: 0px;
+}
+
+
 .app-div-container{
 width: 100%;
 height: 100%;
@@ -18,7 +24,6 @@ backgroundColor: white;
 .dropdown{
 width: 90%;
 margin: 10px 20px 20px 20px;
-font-size: 2vi
 }
 
 
@@ -28,7 +33,7 @@ margin-left: 20px
 }
 
 .dropdown-label{
-font-size: 4vi;
+/*font-size: 2vi;*/
 margin-left: 20px
 }
 
@@ -65,9 +70,13 @@ margin: 10px 40px 20px 40px;
 }
 
 .strain-dropdown-label{
-font-size: 4vi;
 margin-left: 20px;
 margin-top: 30px;
+}
+
+.strain-dropdown{
+width: 40%;
+margin: 20px 0px 10px 20px;
 }
 
 .strains-graph{

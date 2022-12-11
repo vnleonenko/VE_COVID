@@ -2,6 +2,7 @@ from dash.exceptions import PreventUpdate
 from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
 
+import sys
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -10,13 +11,14 @@ from mobile_layout import make_mobile_layout
 from utils import get_subjects, reformat_date, get_strain_data
 
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart, plot_int_bar_chart
+from graphs import plot_pie_chart, plot_int_bar_chart2
 from graphs import plot_choropleth_map
 
 
 geojson_path = r'data/map_data/subject_borders_of_russia.json'
 subjects = get_subjects(geojson_path)
 strain_data = get_strain_data('data/strains/20221020-MH93845-490.csv')
-ve_6_age_gr = pd.read_csv('../calculations/output/ve_9_age_groups_6_vac_intervals.csv',
+ve_6_age_gr = pd.read_csv('../calculations/output/ve_9_age_groups_6_vac_intervals_corrected.csv',
                           encoding='cp1251', delimiter=';')
 
 vaccines_dict = {'Все вакцины': 'AllVaccines',
@@ -56,12 +58,14 @@ def update_storage(subject):
 
         general_ve_map = general_ve_df[general_ve_df['region'] != 'РФ'].to_dict('records')
         general_ve_chart = general_ve_df[general_ve_df['region'] == subject].to_dict('records')
+        print('general_ve', sys.getsizeof(general_ve_map) + sys.getsizeof(general_ve_chart))
 
     return [general_ve_chart, general_ve_map, months, months[0], months, months[1:3]]
 
 
 @app.callback(
     Output('store-int-data', 'data'),
+    Output('store-int-data2', 'data'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
 )
@@ -69,8 +73,13 @@ def update_int_storage(subject, vac_type):
     vaccine = vaccines_dict[vac_type]
     with MSSQL() as mssql:
         int_ve_df = mssql.extract_int_ve(vaccine, subject).to_dict('records')
+        int_ages_ve_df = mssql.extract_int_ve2(vaccine, subject)
+        int_ages_ve = int_ages_ve_df.to_dict('records')
+        print(int_ages_ve_df)
+        print('int_ve', sys.getsizeof(int_ve_df))
+        print('int_ve2', sys.getsizeof(int_ages_ve_df))
 
-    return int_ve_df
+    return [int_ve_df, int_ages_ve]
 
 
 @app.callback(
@@ -123,10 +132,8 @@ def update_bar_chart(stored_data, subject, vac_type, case, age, date_ru):
 def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
     stored_data = pd.DataFrame(stored_data)
     stored_data.fillna(0.0, axis=1, inplace=True)
-
     if len(update_fig) == 0:
         raise PreventUpdate
-
     age_postfix = age_postfixes[age]
 
     column = 've_' + case + age_postfix
@@ -165,55 +172,25 @@ def update_interval_bar_chart(data, subject, vac_type, case, age, dates_list):
 
 @app.callback(
     Output('interval_bar_chart2', 'figure'),
+    Input('store-int-data2', 'data'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_slider', 'value'),
     Input('month_year_int', 'value')
 )
-def update_int_bar_chart2(subject, vac_type, case, age, dates):
+def update_int_bar_chart2(stored_data, subject, vac_type, case, age, dates):
     ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
                  3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
-    data = ve_6_age_gr.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
+    stored_data = pd.DataFrame.from_dict(stored_data)
+
+    data = stored_data.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
                              f'age_group == "{ages_dict[age]}"')
-    fig = go.Figure()
-    vac_intervals = {'21_45_days': '21-45 д.', '45_75_days': '45-75 д.',
-                     '75_90_days': '75-90 д.', '90_105_days': '90-105 д.',
-                     '105_165_days': '105-165 д.', '165_195_days': '165-195 д.'}
+
     converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-    for date in converted_dates:
-        date = date.split("_")[0].rstrip('.B').split(".")
-        y = data[data['data_point'].str.contains(".".join(date))]
-        inversed_date = ".".join(date[::-1])
-        x = [[inversed_date for _ in range(len(vac_intervals))], list(vac_intervals.values())]
-        y.reset_index(drop=True, inplace=True)
-        y = pd.concat([y.iloc[2:, :], y.loc[:1, :]])
-        y = y[['ve_'+case, 'cil_'+case, 'cih_'+case]]
-        cih = y['cih_'+case] - y['ve_'+case]
-        cil = y['ve_'+case] - y['cil_'+case]
-        title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
-                     f'{ages_dict[age]} лет, {subject})'
-        bar_chart = go.Bar(x=x, y=y['ve_'+case], width=0.6, showlegend=False,
-                           marker={'color': y['ve_'+case].fillna(0),
-                                   'colorscale': [(0, "#c4c4c4"), (0.25, "#ff3333"),
-                                                  (0.5, "#ffff66"), (1, "#81c662")],
-                                   'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
-                           error_y=dict(type='data',
-                                        symmetric=False,
-                                        array=cih,
-                                        arrayminus=cil,
-                                        width=3,
-                                        thickness=1.6),
-                           hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
-                                         "+%{error_y.array:.1%} "
-                                         "/ -%{error_y.arrayminus:.1%} "
-                                         "<extra></extra>")
-        fig.add_trace(bar_chart)
-        fig.update_yaxes(tickformat='.0%')
-        fig.update_layout(autosize=False, separators=',', template='plotly_white',
-                          margin={'l': 30, 'b': 25, 't': 90, 'r': 20}, title={'text': title_text, 'x': 0.5, 'y': 0.95,
-                                                                              'xanchor': 'center', 'yanchor': 'top',
-                                                                              'font': {'size': 15}})
+    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
+                 f'{ages_dict[age]} лет, {subject})'
+    fig = plot_int_bar_chart2(data, converted_dates, case, title_text)
     return fig
 
 
@@ -237,27 +214,10 @@ def update_pie_chart(date, subject):
 
     strain_dates_ru = reformat_date(strain_dates.tolist(), delimiter='-')
     date_options = [{'label': l, 'value': v} for l, v in zip(strain_dates_ru, strain_dates)]
-    if pie_chart_data.shape[0] == 0:
-        labels = ['Данные отсутствуют']
-        values = [1]
-        show_text = 'none'
-    else:
-        labels = list(pie_chart_data['pango_lineage'].values[0].keys())
-        values = list(pie_chart_data['pango_lineage'].values[0].values())
-        show_text = 'inside'
+
     date_ru = reformat_date([date], delimiter='-')
     title_text = f'Соотношение циркулирующих штаммов COVID-19 ({subject}, {date_ru[0]})'
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values,
-                                 hovertemplate="%{label}<br>%{percent}"
-                                               "<extra></extra>")])
-    fig.update_traces(textposition=show_text)
-    fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide',
-                      legend={'x': 0.85})
-    fig.update_layout(autosize=True, separators=',',
-                      template='seaborn', margin={'l': 0, 'b': 100, 't': 0, 'r': 0},
-                      paper_bgcolor='white',
-                      title={'text': title_text,  'x': 0.5, 'y': 0.05,
-                             'xanchor': 'center', 'yanchor': 'bottom', 'font': {'size': 15}})
+    fig = plot_pie_chart(pie_chart_data, title_text)
 
     return [fig, date_options]
 

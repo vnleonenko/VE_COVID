@@ -44,6 +44,12 @@ class QueryGenerator:
                         ([nas_age_20_29_total], [nas_age_30_39_total], [nas_age_40_49_total],
                         [nas_age_50_59_total],  [nas_age_60_69_total], [nas_age_70_79_total],
                         [nas_age_80_total], [nas_age_adult_total])) as unpivot_table'''
+            res_query = f'''select sq2.* from
+                        (select case when sq1.region like ' г. Санкт-Петербург' then 'г. Санкт-Петербург' 
+                        else sq1.region end as region,
+                        sq1.age_group, sq1.population from ({res_query}) as sq1) as sq2
+                        where region in ('{"', '".join(self.subjects)}') '''
+            return res_query, columns
 
         res_query = f'''select sq1.* from ({res_query}) as sq1
                     where region in ('{"', '".join(self.subjects)}')'''
