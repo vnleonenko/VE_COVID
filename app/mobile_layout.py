@@ -134,7 +134,6 @@ def make_mobile_layout():
                                                                 dcc.Graph(id='pie-chart',
                                                                           config=config,
                                                                           className='strains-graph')
-
                                                             ])
                                                         ])
                                                     ]

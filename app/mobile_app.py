@@ -4,7 +4,6 @@ import dash_bootstrap_components as dbc
 
 import sys
 import pandas as pd
-import plotly.graph_objects as go
 
 from database_connector import MSSQL
 from mobile_layout import make_mobile_layout
@@ -18,8 +17,6 @@ from graphs import plot_choropleth_map
 geojson_path = r'data/map_data/subject_borders_of_russia.json'
 subjects = get_subjects(geojson_path)
 strain_data = get_strain_data('data/strains/20221020-MH93845-490.csv')
-ve_6_age_gr = pd.read_csv('../calculations/output/ve_9_age_groups_6_vac_intervals_corrected.csv',
-                          encoding='cp1251', delimiter=';')
 
 vaccines_dict = {'Все вакцины': 'AllVaccines',
                  'Спутник V': 'SputnikV',
@@ -75,7 +72,6 @@ def update_int_storage(subject, vac_type):
         int_ve_df = mssql.extract_int_ve(vaccine, subject).to_dict('records')
         int_ages_ve_df = mssql.extract_int_ve2(vaccine, subject)
         int_ages_ve = int_ages_ve_df.to_dict('records')
-        print(int_ages_ve_df)
         print('int_ve', sys.getsizeof(int_ve_df))
         print('int_ve2', sys.getsizeof(int_ages_ve_df))
 
@@ -191,6 +187,7 @@ def update_int_bar_chart2(stored_data, subject, vac_type, case, age, dates):
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
                  f'{ages_dict[age]} лет, {subject})'
     fig = plot_int_bar_chart2(data, converted_dates, case, title_text)
+
     return fig
 
 
