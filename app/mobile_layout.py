@@ -4,7 +4,10 @@ from dash import html, dcc
 
 
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
-age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'от 18 лет и старше']
+age_groups = [{'label': 'от 18 до 59 лет', 'value': '18-59'},
+              {'label': 'от 60 лет и старше', 'value': '60+'},
+              {'label': 'от 18 лет и старше', 'value': '18+'}]
+
 covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
                {'label': 'госпитализированные', 'value': 'hosp'},
                {'label': 'с тяжелой формой', 'value': 'severe'},
@@ -18,7 +21,7 @@ subjects = [{'label': 'Российская Федерация', 'value': 'РФ'
             {'label': 'Московская область', 'value': 'Московская область', }]
 
 
-def make_mobile_layout():
+def make_mobile_layout(months):
     layout = dbc.Container([
         html.Div([
             dbc.Row([
@@ -51,7 +54,7 @@ def make_mobile_layout():
                                                      className='dropdown'),
                                         html.Label(children='Возрастная группа', className='dropdown-label'),
                                         dcc.Dropdown(age_groups,
-                                                     value='от 18 до 59 лет',
+                                                     value='18-59',
                                                      id='age_group',
                                                      clearable=False,
                                                      className='dropdown'),
@@ -66,11 +69,15 @@ def make_mobile_layout():
                                                        className='dropdown'),
                                         html.Label('Месяц и год', className='dropdown-label'),
                                         dcc.Dropdown(id='month_year',
+                                                     options=months,
+                                                     value=months[0],
                                                      clearable=False,
                                                      className='dropdown'),
                                         html.Label('Месяц и год для интервальной ЭВ ', className='dropdown-label'),
                                         dmc.MultiSelect(
                                             description="Выберите до 4х различных месяцев",
+                                            value=months[1:3],
+                                            data=months,
                                             maxSelectedValues=4,
                                             zIndex=100,
                                             id='month_year_int',
@@ -168,7 +175,8 @@ def make_mobile_layout():
             dcc.Store(id='store-data', storage_type='session'),
             dcc.Store(id='store-chart-data', storage_type='session'),
             dcc.Store(id='store-int-data', storage_type='session'),
-            dcc.Store(id='store-int-data2', storage_type='session')
+            dcc.Store(id='store-int-data2', storage_type='session'),
+            html.Div(id='test-div')
         ],  style={'marginLeft': '0px', 'marginRight': '0px'},  className='app-div-container')
     ], fluid=True, className='container-fluid')
     return layout

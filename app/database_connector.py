@@ -34,14 +34,8 @@ class MSSQL:
         query_res = list(map(list, self.cursor.execute(query, args).fetchall()))
         return pd.DataFrame(query_res, columns=columns)
 
-    def extract_int_ve(self, vaccine, subject):
-        query = f'''select * from dbo.VE_W_VAC_INT where vaccine = ? and region = ? '''
-        df = self._query_to_df(query, self._get_ve_columns(), vaccine, subject)
-
-        return df
-
     @staticmethod
-    def _get_ve_columns2():
+    def _get_columns():
         columns = ['data_point', 'region', 'age_group',
                    'vac_interval_group', 'vaccine']
         cases = ['zab', 'hosp', 'severe', 'death']
@@ -51,9 +45,13 @@ class MSSQL:
                 columns.append(pref + case)
         return columns
 
-    def extract_int_ve2(self, vaccine, subject):
-        query = f'''select * from dbo.VE_TEST where vaccine = ? and region = ? '''
-        df = self._query_to_df(query, self._get_ve_columns2(), vaccine, subject)
+    def extract_int_ve(self, ages_split=True):
+        if ages_split:
+            data_point_clause = "like '%[B]%'"
+        else:
+            data_point_clause = "not like '%[B]%'"
+        query = f'''select * from dbo.VE_TEST where data_point {data_point_clause} '''
+        df = self._query_to_df(query, self._get_columns())
 
         return df
 
@@ -151,8 +149,7 @@ class MSSQL:
         columns = self._get_ve_columns()
         columns.remove('vac_interval_group')
         df = self._query_to_df(query, columns)
-        vaccines = {1: 'SputnikV', 3: 'EpiVacCorona', 4: 'CoviVac',
-                    5: 'SputnikLite', 99: 'AllVaccines'}
+        vaccines = {1: 'SputnikV', 3: 'EpiVacCorona', 4: 'CoviVac', 5: 'SputnikLite', 99: 'AllVaccines'}
         df['vaccine'] = df['vaccine'].replace(vaccines)
         return df
 

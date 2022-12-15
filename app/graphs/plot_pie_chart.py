@@ -15,10 +15,10 @@ def plot_pie_chart(chart_data, title_text):
                                                "<extra></extra>")])
     fig.update_traces(textposition=show_text)
     fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide',
-                      legend={'x': 0.85})
+                      legend={'x': 0.87})
     fig.update_layout(autosize=True, separators=',',
                       template='seaborn', margin={'l': 0, 'b': 100, 't': 0, 'r': 0},
                       paper_bgcolor='white',
-                      title={'text': title_text,  'x': 0.5, 'y': 0.05,
+                      title={'text': title_text,  'x': 0.5, 'y': 0.07,
                              'xanchor': 'center', 'yanchor': 'bottom', 'font': {'size': 15}})
     return fig
