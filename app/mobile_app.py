@@ -1,8 +1,11 @@
 from dash.exceptions import PreventUpdate
 from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
+from dash.dependencies import ClientsideFunction
 
 import sys
+import time as t
+import numpy as np
 import pandas as pd
 
 from database_connector import MSSQL
@@ -23,13 +26,15 @@ vaccines_dict = {'Все вакцины': 'AllVaccines',
                  'Спутник Лайт': 'SputnikLite',
                  'ЭпиВак': 'EpiVacCorona',
                  'КовиВак': 'CoviVac'}
+
 title_cases = {'zab': 'симптоматического',
                'hosp': 'госпитализации с',
                'severe': 'тяжелого течения',
                'death': 'летального исхода от'}
-age_postfixes = {'от 18 до 59 лет': '_18_59',
-                 'от 60 лет и старше': '_60',
-                 'от 18 лет и старше': '_total'}
+
+age_postfixes = {'18-59': '_18_59',
+                 '60+': '_60',
+                 '18+': '_total'}
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -69,13 +74,13 @@ def update_storage(subject):
 def update_int_storage(subject, vac_type):
     vaccine = vaccines_dict[vac_type]
     with MSSQL() as mssql:
-        int_ve_df = mssql.extract_int_ve(vaccine, subject).to_dict('records')
-        int_ages_ve_df = mssql.extract_int_ve2(vaccine, subject)
-        int_ages_ve = int_ages_ve_df.to_dict('records')
-        print('int_ve', sys.getsizeof(int_ve_df))
-        print('int_ve2', sys.getsizeof(int_ages_ve_df))
+        int_ve = mssql.extract_int_ve(vaccine, subject, ages_split=False).to_dict('records')
+        int_ages_ve = mssql.extract_int_ve(vaccine, subject, ages_split=True).to_dict('records')
 
-    return [int_ve_df, int_ages_ve]
+        print('int_ve', sys.getsizeof(int_ve))
+        print('int_ve2', sys.getsizeof(int_ages_ve))
+
+    return [int_ve, int_ages_ve]
 
 
 @app.callback(
@@ -93,6 +98,7 @@ def update_bar_chart(stored_data, subject, vac_type, case, age, date_ru):
     stored_data['data_point'] = stored_data['data_point'].apply(lambda x: x.split('_')[0])
     stored_data['data_point'] = pd.to_datetime(stored_data['data_point'], format='%Y.%m')
 
+    print(age)
     case_postfix = case
     age_postfix = age_postfixes[age]
     column = 've_' + case_postfix + age_postfix
@@ -130,6 +136,8 @@ def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
     stored_data.fillna(0.0, axis=1, inplace=True)
     if len(update_fig) == 0:
         raise PreventUpdate
+
+    print(age)
     age_postfix = age_postfixes[age]
 
     column = 've_' + case + age_postfix
@@ -156,12 +164,8 @@ def update_interval_bar_chart(data, subject, vac_type, case, age, dates_list):
     chart_data = pd.DataFrame.from_dict(data)
     converted_dates = sorted(reformat_date(dates_list, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
 
-    age_postfix = age_postfixes[age]
-    column = 've_' + case + age_postfix
-    ci_high_title = 'cih_' + case + age_postfix
-    ci_low_title = 'cil_' + case + age_postfix
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age}, {subject})'
-    fig = plot_int_bar_chart(chart_data, converted_dates, column, [ci_low_title, ci_high_title], title_text)
+    fig = plot_int_bar_chart(chart_data, converted_dates, case, title_text)
 
     return fig
 
@@ -191,6 +195,54 @@ def update_int_bar_chart2(stored_data, subject, vac_type, case, age, dates):
     return fig
 
 
+"""@app.callback(
+    Output('interval_bar_chart2', 'figure'),
+    Input('subject', 'value'),
+    Input('vaccine_type', 'value'),
+    Input('disease_severity', 'value'),
+    Input('age_slider', 'value'),
+    Input('month_year_int', 'value')
+)
+def update_int_bar_chart_test(subject, vac_type, case, age, dates):
+    ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
+                 3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
+    start = t.time()
+    query = f'''select 
+             data_point, region, age_group, vac_interval_group,
+             case when vaccine = 'SputnikV' then 'Спутник V' 
+                  when vaccine = 'SputnikLite' then 'Спутник Лайт'
+                  when vaccine = 'CoviVac' then 'КовиВак'
+                  when vaccine = 'EpiVacCorona' then 'ЭпиВак'
+                  when vaccine = 'AllVaccines' then 'Все вакцины'
+             end as vaccine,
+             ve_zab, cil_zab, cih_zab, ve_hosp, cil_hosp, cih_hosp,
+             ve_severe, cil_severe, cih_severe, ve_death, cil_death, cih_death
+             from dbo.VE_TEST where vaccine = ? and region = ? '''
+    columns = ['data_point', 'region', 'age_group', 'vac_interval_group',
+               'vaccine', 've_zab', 'cil_zab', 'cih_zab', 've_hosp', 'cil_hosp', 'cih_hosp',
+               've_severe', 'cil_severe', 'cih_severe', 've_death', 'cil_death', 'cih_death']
+
+    query_res = list(map(list, con.cursor.execute(query, vaccines_dict[vac_type], subject).fetchall()))
+    data = pd.DataFrame(query_res, columns=columns)
+    con.close()
+    print('ve2: time to fetch int bar chart data from db', t.time()-start)
+
+    #start_plot = t.time()
+    data = data.query(f'region == "{subject}" & vaccine == "{vac_type}" &'
+                      f'age_group == "{ages_dict[age]}"')
+
+    converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
+    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
+                 f'{ages_dict[age]} лет, {subject})'
+    fig = plot_int_bar_chart2(data, converted_dates, case, title_text)
+    #print('time to plot int bar chart', t.time()-start_plot)
+
+
+    return fig
+
+"""
+
+
 @app.callback(
     Output('pie-chart', 'figure'),
     Output('strain_month_year', 'options'),
@@ -218,6 +270,25 @@ def update_pie_chart(date, subject):
 
     return [fig, date_options]
 
+
+'''app.clientside_callback(
+    """
+    function(value){
+    let _lsTotal = 0,_xLen, _x;
+    for (_x in window.sessionStorage) {
+        if (!window.sessionStorage.hasOwnProperty(_x)) continue;
+               _xLen = (window.sessionStorage[_x].length + _x.length) * 2;
+               _lsTotal += _xLen;
+    }
+    console.log((_lsTotal / 1024).toFixed(2));
+    console.log(window.screen.height, window.innerHeight);
+    a = 0;
+    return a
+    }
+    """,
+    Output('test-div', 'children'),
+    Input('subject', 'value')
+)'''
 
 if __name__ == '__main__':
     app.run_server(debug=True)

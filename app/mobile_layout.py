@@ -4,7 +4,11 @@ from dash import html, dcc
 
 
 vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
-age_groups = ['от 18 до 59 лет', 'от 60 лет и старше', 'от 18 лет и старше']
+
+age_groups = [{'label':  'от 18 до 59 лет', 'value': '18-59'},
+              {'label': 'от 60 лет и старше', 'value': '60+'},
+              {'label': 'от 18 лет и старше', 'value': '18+'}]
+
 covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
                {'label': 'госпитализированные', 'value': 'hosp'},
                {'label': 'с тяжелой формой', 'value': 'severe'},
@@ -51,7 +55,7 @@ def make_mobile_layout():
                                                      className='dropdown'),
                                         html.Label(children='Возрастная группа', className='dropdown-label'),
                                         dcc.Dropdown(age_groups,
-                                                     value='от 18 до 59 лет',
+                                                     value='18-59',
                                                      id='age_group',
                                                      clearable=False,
                                                      className='dropdown'),

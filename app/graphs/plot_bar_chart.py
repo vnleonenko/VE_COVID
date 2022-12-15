@@ -59,11 +59,16 @@ def plot_horizontal_bar_chart(x, y, title_text):
     return bar_chart
 
 
-def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
+def plot_int_bar_chart(data, dates, case, title_text):
     fig = go.Figure()
     vac_intervals = {'21_45_days': '21-45 дней', '45_75_days': '45-75 дней',
                      '75_90_days': '75-90 дней', '90_105_days': '90-105 дней',
                      '105_165_days': '105-165 дней', '165_195_days': '165-195 дней'}
+
+    ve_title = 've_'+case
+    cih_title = 'cih_' + case
+    cil_title = 'cil_' + case
+
     for date in dates:
         date = date.split("_")[0].split(".")
         y = data[data['data_point'].str.contains(".".join(date))]
@@ -71,9 +76,8 @@ def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
         x = [[inversed_date for _ in range(len(vac_intervals))], list(vac_intervals.values())]
         y.reset_index(drop=True, inplace=True)
         y = pd.concat([y.iloc[2:, :], y.loc[:1, :]])
-        y = y[[column_title, ci_titles[1], ci_titles[0]]]
-        cih = y[ci_titles[1]] - y[column_title]
-        cil = y[column_title] - y[ci_titles[0]]
+        cih = y[cih_title] - y[ve_title]
+        cil = y[ve_title] - y[cil_title]
         '''cil = y[ci_titles[0]]
         y = y[column_title].fillna(0).tolist()
         cil_values = [cil_ if y_/cil_ < 2 else 2*y_ for y_, cil_ in zip(y, cil)]
@@ -87,8 +91,8 @@ def plot_int_bar_chart(data, dates, column_title, ci_titles, title_text):
         print('y', y[column_title], '\n', 'cil', y[ci_titles[0]], '\n', 'cih', y[ci_titles[1]])
         cil = [i - j for i, j in zip(y_, cil_)]'''
 
-        bar_chart = go.Bar(x=x, y=y[column_title], width=0.6, showlegend=False,
-                           marker={'color': y[column_title],
+        bar_chart = go.Bar(x=x, y=y[ve_title], width=0.6, showlegend=False,
+                           marker={'color': y[ve_title],
                                    'colorscale': [(0, "#c4c4c4"), (0.25, "#ff3333"),
                                                   (0.5, "#ffff66"), (1, "#81c662")],
                                    'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
