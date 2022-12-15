@@ -4,3 +4,4 @@ venv
 .DS_Store
 .env
 newvenv
+calculations/unaggregated_data

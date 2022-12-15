@@ -6,27 +6,20 @@ from query_generator import QueryGenerator
 
 def main():
     with MSSQLConnector() as con:
-        query_gen = QueryGenerator(age_groups=9, vac_interval_group=True, subjects=['РФ', 'г. Санкт-Петербург',
+        query_gen = QueryGenerator(age_groups=3, vac_interval_group=True, subjects=['РФ', 'г. Санкт-Петербург',
                                                                                     'Московская область'])
         data_processor = DataProcessor(con.cursor)
         zab_df = data_processor.query_to_df(*query_gen.query_zab_data())
         vac_df = data_processor.query_to_df(*query_gen.query_vac_data())
         zab_vac_df = data_processor.query_to_df(*query_gen.query_zab_vac_data())
         pop_df = data_processor.query_to_df(*query_gen.query_pop_data())
-<<<<<<< HEAD
-        '''zab_df.to_csv('../output/zab_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        vac_df.to_csv('../output/vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        zab_vac_df.to_csv('../output/zab_vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        pop_df.to_csv('../output/pop_df.csv', index=False, encoding='cp1251', na_rep='NULL')'''
-=======
-        zab_df.to_csv('../output/zab_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        vac_df.to_csv('../output/vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        zab_vac_df.to_csv('../output/zab_vac_df.csv', index=False, encoding='cp1251', na_rep='NULL')
-        pop_df.to_csv('../output/pop_df.csv', index=False, encoding='cp1251', na_rep='NULL')
->>>>>>> c397820b4409472eeff9880e49522306a50f4895
+        zab_df.to_csv('../output/zab_df2.csv', index=False, encoding='cp1251', na_rep='NULL')
+        vac_df.to_csv('../output/vac_df2.csv', index=False, encoding='cp1251', na_rep='NULL')
+        zab_vac_df.to_csv('../output/zab_vac_df2.csv', index=False, encoding='cp1251', na_rep='NULL')
+        pop_df.to_csv('../output/pop_df2.csv', index=False, encoding='cp1251', na_rep='NULL')
+
 
     estimator = VEEstimator(zab_df, vac_df, zab_vac_df, pop_df)
-    ppv = estimator._compute_ppv()
     ve_df = estimator.compute_ve()
     if query_gen.vac_interval_group:
         vac_intervals = '6'

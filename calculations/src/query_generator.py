@@ -5,6 +5,8 @@ class QueryGenerator:
     def __init__(self, age_groups, vac_interval_group=True, gender=False, subjects='all'):
         self.age_groups = age_groups
         self.vac_interval_group = vac_interval_group
+        if not self.vac_interval_group:
+            self.age_groups = 3
         self.gender = gender
         if age_groups == 3:
             self.age_group_filter = "('18-59', '60+')"

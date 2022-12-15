@@ -3,6 +3,8 @@ from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
 
 import sys
+import time as t
+import numpy as np
 import pandas as pd
 
 from database_connector import MSSQL
@@ -23,75 +25,48 @@ vaccines_dict = {'Все вакцины': 'AllVaccines',
                  'Спутник Лайт': 'SputnikLite',
                  'ЭпиВак': 'EpiVacCorona',
                  'КовиВак': 'CoviVac'}
+
 title_cases = {'zab': 'симптоматического',
                'hosp': 'госпитализации с',
                'severe': 'тяжелого течения',
                'death': 'летального исхода от'}
-age_postfixes = {'от 18 до 59 лет': '_18_59',
-                 'от 60 лет и старше': '_60',
-                 'от 18 лет и старше': '_total'}
+
+age_postfixes = {'18-59': '_18_59',
+                 '60+': '_60',
+                 '18+': '_total'}
+
+age_groups = {'18-59': 'от 18 до 59 лет',
+              '60+': 'от 60 лет и старше',
+              '18+': 'от 18 лет и старше'}
+
+
+with MSSQL() as mssql:
+    int_ve_df = mssql.extract_int_ve(ages_split=False)
+    int_ages_ve_df = mssql.extract_int_ve(ages_split=True)
+    general_ve_df = mssql.extract_general_ve()
+    months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': "width=device-width, "
                                                       "initial-scale=1, maximum-scale=1, user-scalable=no"}])
 server = app.server
-app.layout = make_mobile_layout()
-
-
-@app.callback(
-    Output('store-chart-data', 'data'),
-    Output('store-data', 'data'),
-    Output('month_year', 'options'),
-    Output('month_year', 'value'),
-    Output('month_year_int', 'data'),
-    Output('month_year_int', 'value'),
-    Input('subject', 'value'),
-)
-def update_storage(subject):
-    with MSSQL() as mssql:
-        general_ve_df = mssql.extract_general_ve()
-        months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')
-
-        general_ve_map = general_ve_df[general_ve_df['region'] != 'РФ'].to_dict('records')
-        general_ve_chart = general_ve_df[general_ve_df['region'] == subject].to_dict('records')
-        print('general_ve', sys.getsizeof(general_ve_map) + sys.getsizeof(general_ve_chart))
-
-    return [general_ve_chart, general_ve_map, months, months[0], months, months[1:3]]
-
-
-@app.callback(
-    Output('store-int-data', 'data'),
-    Output('store-int-data2', 'data'),
-    Input('subject', 'value'),
-    Input('vaccine_type', 'value'),
-)
-def update_int_storage(subject, vac_type):
-    vaccine = vaccines_dict[vac_type]
-    with MSSQL() as mssql:
-        int_ve_df = mssql.extract_int_ve(vaccine, subject).to_dict('records')
-        int_ages_ve_df = mssql.extract_int_ve2(vaccine, subject)
-        int_ages_ve = int_ages_ve_df.to_dict('records')
-        print('int_ve', sys.getsizeof(int_ve_df))
-        print('int_ve2', sys.getsizeof(int_ages_ve_df))
-
-    return [int_ve_df, int_ages_ve]
+app.layout = make_mobile_layout(months)
 
 
 @app.callback(
     Output('bar_chart_v', 'figure'),
     Output('bar_chart_h', 'figure'),
-    Input('store-chart-data', 'data'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_group', 'value'),
     Input('month_year', 'value')
 )
-def update_bar_chart(stored_data, subject, vac_type, case, age, date_ru):
-    stored_data = pd.DataFrame(stored_data)
-    stored_data['data_point'] = stored_data['data_point'].apply(lambda x: x.split('_')[0])
-    stored_data['data_point'] = pd.to_datetime(stored_data['data_point'], format='%Y.%m')
+def update_bar_chart(subject, vac_type, case, age, date_ru):
+    general_ve_chart = general_ve_df[general_ve_df['region'] == subject]
+
+    data_points = general_ve_chart['data_point'].apply(lambda x: x.split('_')[0])
 
     case_postfix = case
     age_postfix = age_postfixes[age]
@@ -100,17 +75,21 @@ def update_bar_chart(stored_data, subject, vac_type, case, age, date_ru):
     ci_low_title = 'cil_' + case_postfix + age_postfix
     vaccine = vaccines_dict[vac_type]
 
-    chart_data_v = stored_data[stored_data['vaccine'] == vaccine]
-    x_v = chart_data_v['data_point']
+    chart_data_v = general_ve_chart[general_ve_chart['vaccine'] == vaccine]
+    x_v = pd.to_datetime(data_points, format='%Y.%m')
     y_v = chart_data_v[column]
     ci = (y_v - chart_data_v[ci_low_title], chart_data_v[ci_high_title] - y_v)
-    title_text_v = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19 <br>({vac_type}, {age}, {subject})'
+    title_text_v = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19 <br>({vac_type},' \
+                   f' {age_groups[age]}, {subject})'
     bar_chart_v = plot_vertical_bar_chart(x=x_v, y=y_v, ci=ci, title_text=title_text_v)
 
     date_en = reformat_date([date_ru], to_numeric=True)[0]
-    x_h = stored_data[stored_data['data_point'] == date_en][column]
-    y_h = stored_data[stored_data['data_point'] == date_en]['vaccine']
-    title_text_h = f'ЭВ в отношении предотвращения<br>{title_cases[case]} COVID-19<br>({age}, {date_ru}, {subject})'
+    x_h = general_ve_chart[general_ve_chart['data_point'].str.contains(date_en)][column]
+    y_h = general_ve_chart[general_ve_chart['data_point'].str.contains(date_en)]['vaccine'].tolist()
+    vaccines_reversed_dict = {v: k for k, v in vaccines_dict.items()}
+    y_h = [vaccines_reversed_dict[y] for y in y_h]
+    title_text_h = f'ЭВ в отношении предотвращения<br>{title_cases[case]} COVID-19<br>({age_groups[age]},' \
+                   f' {date_ru}, {subject})'
     bar_chart_h = plot_horizontal_bar_chart(x_h, y_h, title_text_h)
 
     return [bar_chart_v, bar_chart_h]
@@ -118,26 +97,27 @@ def update_bar_chart(stored_data, subject, vac_type, case, age, date_ru):
 
 @app.callback(
     Output('map', 'figure'),
-    Input('store-data', 'data'),
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_group', 'value'),
     Input('month_year', 'value'),
     Input('map-checklist', 'value')
 )
-def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
-    stored_data = pd.DataFrame(stored_data)
-    stored_data.fillna(0.0, axis=1, inplace=True)
+def update_map(vac_type, case, age, date_ru, update_fig):
+    map_data = general_ve_df[general_ve_df['region'] != 'РФ']
+    map_data = map_data.fillna(0.0, axis=1)
+
     if len(update_fig) == 0:
         raise PreventUpdate
     age_postfix = age_postfixes[age]
 
     column = 've_' + case + age_postfix
     date_en = reformat_date([date_ru], to_numeric=True, delimiter='.')[0]
-    map_data = stored_data.query(f'vaccine == "{vaccines_dict[vac_type]}"')
+    map_data = map_data.query(f'vaccine == "{vaccines_dict[vac_type]}"')
     map_data = map_data[map_data['data_point'].str.contains(date_en)]
     map_data.rename(columns={'region': 'name'}, inplace=True)
-    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age}, {date_ru})'
+    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age_groups[age]},' \
+                 f' {date_ru})'
     map_figure = plot_choropleth_map(subjects, map_data, column, 'name', title_text)
 
     return map_figure
@@ -145,49 +125,43 @@ def update_map(stored_data, vac_type, case, age, date_ru, update_fig):
 
 @app.callback(
     Output('interval_bar_chart', 'figure'),
-    Input('store-int-data', 'data'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_group', 'value'),
     Input('month_year_int', 'value')
 )
-def update_interval_bar_chart(data, subject, vac_type, case, age, dates_list):
-    chart_data = pd.DataFrame.from_dict(data)
+def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
     converted_dates = sorted(reformat_date(dates_list, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-
-    age_postfix = age_postfixes[age]
-    column = 've_' + case + age_postfix
-    ci_high_title = 'cih_' + case + age_postfix
-    ci_low_title = 'cil_' + case + age_postfix
-    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age}, {subject})'
-    fig = plot_int_bar_chart(chart_data, converted_dates, column, [ci_low_title, ci_high_title], title_text)
+    chart_data = int_ve_df.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
+                             f'age_group == "{age}"')
+    chart_data = chart_data.replace([None, np.nan, np.inf], 0)
+    title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age_groups[age]}, ' \
+                 f'{subject})'
+    fig = plot_int_bar_chart(chart_data, converted_dates, case, title_text)
 
     return fig
 
 
 @app.callback(
     Output('interval_bar_chart2', 'figure'),
-    Input('store-int-data2', 'data'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
     Input('disease_severity', 'value'),
     Input('age_slider', 'value'),
     Input('month_year_int', 'value')
 )
-def update_int_bar_chart2(stored_data, subject, vac_type, case, age, dates):
+def update_int_bar_chart2(subject, vac_type, case, age, dates):
     ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
                  3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
-    stored_data = pd.DataFrame.from_dict(stored_data)
 
-    data = stored_data.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
+    data = int_ages_ve_df.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
                              f'age_group == "{ages_dict[age]}"')
 
     converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
                  f'{ages_dict[age]} лет, {subject})'
     fig = plot_int_bar_chart2(data, converted_dates, case, title_text)
-
     return fig
 
 
