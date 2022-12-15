@@ -4,3 +4,5 @@ venv
 .DS_Store
 .env
 newvenv
+calculations/unaggregated_data/data/niig_12122022/
+calculations/unaggregated_data/niig_12122022.zip
