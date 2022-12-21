@@ -1,5 +1,9 @@
 import plotly.graph_objects as go
 import pandas as pd
+import locale
+
+
+locale.setlocale(locale.LC_TIME, 'ru_RU')
 
 
 def generate_colorscale(y):
@@ -25,16 +29,12 @@ def generate_colorscale(y):
 
 
 def plot_vertical_bar_chart(x, y, ci, title_text):
-    x_vals = [i for i in range(y.shape[0])]
-    tick_text = x.dt.strftime('%m.%Y')
-    bar_chart = go.Figure(data=[go.Bar(x=x_vals, y=y,
-                                       width=0.5,
+    bar_chart = go.Figure(data=[go.Bar(x=x, y=y,
                                        error_y=dict(type='data',
                                                     symmetric=False,
                                                     array=ci[1],
                                                     arrayminus=ci[0],
-                                                    width=4,
-                                                    thickness=2),
+                                                    thickness=1.6),
                                        hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
                                                      "+%{error_y.array:.1%} "
                                                      "/ -%{error_y.arrayminus:.1%} "
@@ -43,17 +43,33 @@ def plot_vertical_bar_chart(x, y, ci, title_text):
                             marker_line_color='rgb(8,48,107)',
                             marker_line_width=1.5,
                             opacity=0.6)
+    bar_chart.update_xaxes(tickformat='%m.%Y')
     bar_chart.update_layout(paper_bgcolor="white",
                             autosize=False,
                             template='plotly_white',
                             margin={'l': 30, 'b': 0, 't': 140, 'r': 20},
-                            xaxis={'tickmode': 'array', 'tickvals': x_vals,
-                                   'ticktext': tick_text},
                             yaxis_tickformat='.0%',
                             separators=',',
                             title={'text': title_text, 'x': 0.5, 'y': 0.92,
                                    'xanchor': 'center', 'yanchor': 'top',
                                    'font': {'size': 12}})
+    bar_chart.update_layout(
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=6,
+                         label="6м",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=1,
+                         label="1г",
+                         step="year",
+                         stepmode="todate"),
+                    dict(label="все",
+                         step="all")]),
+                yanchor='middle'
+            ),
+            type="date"))
     return bar_chart
 
 

@@ -65,25 +65,46 @@ class QueryGenerator:
                      where data_point {self.data_point_filter} and age_group in {self.age_group_filter}
                      group by data_point, region, age_group
                      '''
-        res_query = self._group_by_age(columns, columns[:3], init_query)
-        res_query = self._group_by_subjects(columns, columns[:3], res_query)
-        res_query = f'''select sq1.* from ({res_query}) as sq1 where region in ('{"', '".join(self.subjects)}')'''
+        if self.age_groups == 3:
+            res_query = self.group_by_age(columns, columns[:3], init_query)
+        else:
+            res_query = init_query
+
+        res_query = self.group_by_subjects(columns, columns[:3], res_query)
+        res_query = f'''select sq1.* from ({res_query}) as sq1'''
+        if self.subjects == 'all':
+            return res_query, columns
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where region in ('{"', '".join(self.subjects)}')'''
         return res_query, columns
 
     def query_zab_vac_data(self):
         columns = ['data_point', 'region', 'age_group', 'vac_interval_group', 'vaccine',
                    'count_vac_zab', 'count_vac_hosp', 'count_vac_severe', 'count_vac_death']
-
         select_columns = ', '.join([c if 'count' not in c else f'sum({c}) as {c}' for c in columns])
 
         init_query = f'''select {select_columns} from dbo.ZAB_VAC_VIEW
                     where data_point {self.data_point_filter} and age_group in {self.age_group_filter}
                     group by data_point, region, age_group, vac_interval_group, vaccine'''
-        res_query = self._group_by_age(columns, columns[:5], init_query)
-        res_query = self._group_by_subjects(columns, columns[:5], res_query)
-        res_query = self._group_by_vaccines(columns, columns[:5], res_query)
 
-        res_query = f'''select sq1.* from ({res_query}) as sq1 where region in ('{"', '".join(self.subjects)}')'''
+        if not self.vac_interval_group:
+            res_query = self.group_by_vac_intervals(columns, columns[:5], init_query)
+            init_query = res_query
+
+        if self.age_groups == 3:
+            res_query = self.group_by_age(columns, columns[:5], init_query)
+        else:
+            res_query = init_query
+
+        res_query = self.group_by_subjects(columns, columns[:5], res_query)
+        res_query = self.group_by_vaccines(columns, columns[:5], res_query)
+        res_query = f'''select sq1.* from ({res_query}) as sq1'''
+        if self.subjects == 'all':
+            return res_query, columns
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                                where region in ('{"', '".join(self.subjects)}')'''
 
         return res_query, columns
 
@@ -93,13 +114,26 @@ class QueryGenerator:
         init_query = f'''select {select_columns} from dbo.VAC_VIEW
                         where data_point {self.data_point_filter} and age_group in {self.age_group_filter}
                         group by data_point, region, vac_interval_group, age_group, vaccine'''
-        res_query = self._group_by_age(columns, columns[:5], init_query)
-        res_query = self._group_by_subjects(columns, columns[:5], res_query)
-        res_query = self._group_by_vaccines(columns, columns[:5], res_query)
-        res_query = f'''select sq1.* from ({res_query}) as sq1 where region in ('{"', '".join(self.subjects)}')'''
+        if not self.vac_interval_group:
+            res_query = self.group_by_vac_intervals(columns, columns[:5], init_query)
+            init_query = res_query
+
+        if self.age_groups == 3:
+            res_query = self.group_by_age(columns, columns[:5], init_query)
+        else:
+            res_query = init_query
+
+        res_query = self.group_by_subjects(columns, columns[:5], res_query)
+        res_query = self.group_by_vaccines(columns, columns[:5], res_query)
+        res_query = f'''select sq1.* from ({res_query}) as sq1'''
+        if self.subjects == 'all':
+            return res_query, columns
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where region in ('{"', '".join(self.subjects)}')'''
         return res_query, columns
 
-    def _group_by_age(self, columns, groupby_columns, init_query):
+    def group_by_age(self, columns, groupby_columns, init_query):
         select_sq1_columns = ', '.join([f'sq1.{c}' if c != 'age_group'
                                         else f"case when sq1.{c} in {self.age_group_filter} then '18+' end as {c}"
                                         for c in columns])
@@ -111,7 +145,8 @@ class QueryGenerator:
         subquery2 = f'''select {select_sq2_columns} from ({subquery1}) as sq2 group by {groupby_sq2_columns}'''
         return f'''{init_query} union {subquery2}'''
 
-    def _group_by_subjects(self, columns, groupby_columns, init_query):
+    @staticmethod
+    def group_by_subjects(columns, groupby_columns, init_query):
         select_sq1_columns = ', '.join([f'sq1.{c}' if c != 'region'
                                         else f"case when sq1.{c} not like 'РФ' then 'РФ' end as {c}"
                                         for c in columns])
@@ -120,12 +155,11 @@ class QueryGenerator:
         select_sq2_columns = ', '.join([f'sq2.{c}' if 'count' not in c else f'sum(sq2.{c}) as {c}'
                                         for c in columns])
         groupby_sq2_columns = ', '.join([f'sq2.{c}' for c in groupby_columns])
-        subquery2 = f'''select {select_sq2_columns} from ({subquery1}) as sq2 group by {groupby_sq2_columns}
-                    '''
-
+        subquery2 = f'''select {select_sq2_columns} from ({subquery1}) as sq2 group by {groupby_sq2_columns}'''
         return f'''{init_query} union {subquery2}'''
 
-    def _group_by_vaccines(self, columns, groupby_columns, init_query):
+    @staticmethod
+    def group_by_vaccines(columns, groupby_columns, init_query):
         select_sq1_columns = ', '.join([f'sq1.{c}' if c != 'vaccine'
                                         else f"case when sq1.{c} not like 'AllVaccines' then 'AllVaccines' end as {c}"
                                         for c in columns])
@@ -139,5 +173,17 @@ class QueryGenerator:
 
         return f'''{init_query} union {subquery2}'''
 
+    @staticmethod
+    def group_by_vac_intervals(columns, groupby_columns, init_query):
+        select_sq1_columns = ', '.join([f'sq1.{c}' if c != 'vac_interval_group'
+                                        else f"case when sq1.{c} not like '21_165_days' then '21_165_days' end as {c}"
+                                        for c in columns])
+        subquery1 = f'''select {select_sq1_columns} from ({init_query}) as sq1'''
+
+        select_sq2_columns = ', '.join([f'sq2.{c}' if 'count' not in c else f'sum(sq2.{c}) as {c}'
+                                        for c in columns])
+        groupby_sq2_columns = ', '.join([f'sq2.{c}' for c in groupby_columns])
+        subquery2 = f'''select {select_sq2_columns} from ({subquery1}) as sq2 group by {groupby_sq2_columns}'''
+        return subquery2
 
 
