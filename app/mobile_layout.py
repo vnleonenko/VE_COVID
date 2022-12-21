@@ -3,7 +3,12 @@ import dash_mantine_components as dmc
 from dash import html, dcc
 
 
-vaccines = ['Спутник V', 'Спутник Лайт', 'ЭпиВак', 'КовиВак', 'Все вакцины']
+vaccines = [{'label': 'Спутник V',  'value': 'SputnikV'},
+            {'label': 'Спутник Лайт', 'value': 'SputnikLite'},
+            {'label': 'ЭпиВак',  'value': 'EpiVacCorona'},
+            {'label': 'КовиВак', 'value': 'CoviVac'},
+            {'label': 'Все вакцины', 'value': 'AllVaccines'}]
+
 age_groups = [{'label': 'от 18 до 59 лет', 'value': '18-59'},
               {'label': 'от 60 лет и старше', 'value': '60+'},
               {'label': 'от 18 лет и старше', 'value': '18+'}]
@@ -21,7 +26,7 @@ subjects = [{'label': 'Российская Федерация', 'value': 'РФ'
             {'label': 'Московская область', 'value': 'Московская область', }]
 
 
-def make_mobile_layout(months):
+def make_mobile_layout(months, initial_values):
     layout = dbc.Container([
         html.Div([
             dbc.Row([
@@ -42,25 +47,25 @@ def make_mobile_layout(months):
                                         html.Hr(className='dropdown'),
                                         html.Label(children='Субъект', className='dropdown-label'),
                                         dcc.Dropdown(subjects,
-                                                     value='РФ',
+                                                     value=initial_values['subject_value'],
                                                      id='subject',
                                                      clearable=False,
                                                      className='dropdown'),
                                         html.Label(children='Тип вакцины', className='dropdown-label'),
                                         dcc.Dropdown(vaccines,
-                                                     value='Спутник V',
+                                                     value=initial_values['vaccine_value'],
                                                      id='vaccine_type',
                                                      clearable=False,
                                                      className='dropdown'),
                                         html.Label(children='Возрастная группа', className='dropdown-label'),
                                         dcc.Dropdown(age_groups,
-                                                     value='18-59',
+                                                     value=initial_values['age_value'],
                                                      id='age_group',
                                                      clearable=False,
                                                      className='dropdown'),
                                         html.Label(children='Показатель ЭВ', className='dropdown-label'),
                                         dcc.RadioItems(covid_cases,
-                                                       value='zab',
+                                                       value=initial_values['case_value'],
                                                        id='disease_severity',
                                                        labelStyle={'display': 'block'},
                                                        inputStyle={"marginRight": "5px",
@@ -73,6 +78,13 @@ def make_mobile_layout(months):
                                                      value=months[0],
                                                      clearable=False,
                                                      className='dropdown'),
+                                        dcc.Checklist(options=[{'label': 'Изменять карту',
+                                                                'value': True}],
+                                                      value=[True],
+                                                      id='map-checklist',
+                                                      className='dropdown',
+                                                      inputStyle={"marginRight": 15,
+                                                                  "marginTop": 25}),
                                         html.Label('Месяц и год для интервальной ЭВ ', className='dropdown-label'),
                                         dmc.MultiSelect(
                                             description="Выберите до 4х различных месяцев",
@@ -82,14 +94,7 @@ def make_mobile_layout(months):
                                             zIndex=100,
                                             id='month_year_int',
                                             style={'height': '7%', 'margin': '10px 30px 20px 20px',
-                                                   'fontSize': '20vi', 'fontFamily': 'Helvetica'}),
-                                        dcc.Checklist(options=[{'label': 'Изменять карту',
-                                                                'value': True}],
-                                                      value=[True],
-                                                      id='map-checklist',
-                                                      className='dropdown',
-                                                      inputStyle={"marginRight": 15,
-                                                                  "marginTop": 25})
+                                                   'fontSize': '20vi', 'fontFamily': 'Helvetica'})
                                     ])
                                 ])
                             ], style={"overflow": "scroll"},

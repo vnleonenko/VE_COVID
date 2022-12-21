@@ -45,12 +45,13 @@ class MSSQL:
                 columns.append(pref + case)
         return columns
 
-    def extract_int_ve(self, ages_split=True):
+    def extract_int_ve(self, subject, age, vaccine, ages_split=True):
         if ages_split:
             data_point_clause = "like '%[B]%'"
         else:
             data_point_clause = "not like '%[B]%'"
-        query = f'''select * from dbo.VE_TEST where data_point {data_point_clause} '''
+        query = f'''select * from dbo.VE_TEST where data_point {data_point_clause}
+                and region = '{subject}' and age_group = '{age}' and vaccine = '{vaccine}' '''
         df = self._query_to_df(query, self._get_columns())
 
         return df
@@ -97,7 +98,7 @@ class MSSQL:
                     sum(cil_death_total) as cil_death_total,
                     sum(cih_death_total) as cih_death_total
 
-                    from 
+                    from
                         (select  dbo.VE_CI.data_point, dbo.VE_CI.vaccine_id, dbo.REG_IDS.*,
                         case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.ve else 0 end as ve_zab_18_59,
                         case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.ve else 0 end as ve_zab_60,
@@ -144,8 +145,9 @@ class MSSQL:
                         on dbo.VE_CI.reg_id = dbo.REG_IDS.reg_id
                     ) as sq1
                     group by sq1.data_point, sq1.vaccine_id, sq1.region
-                    order by sq1.data_point, sq1.vaccine_id, sq1.region 
+                    order by sq1.data_point, sq1.vaccine_id, sq1.region
                     '''
+
         columns = self._get_ve_columns()
         columns.remove('vac_interval_group')
         df = self._query_to_df(query, columns)

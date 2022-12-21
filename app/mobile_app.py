@@ -2,8 +2,6 @@ from dash.exceptions import PreventUpdate
 from dash import Dash, Input, Output
 import dash_bootstrap_components as dbc
 
-import sys
-import time as t
 import numpy as np
 import pandas as pd
 
@@ -34,24 +32,82 @@ title_cases = {'zab': 'симптоматического',
 age_postfixes = {'18-59': '_18_59',
                  '60+': '_60',
                  '18+': '_total'}
-
 age_groups = {'18-59': 'от 18 до 59 лет',
               '60+': 'от 60 лет и старше',
               '18+': 'от 18 лет и старше'}
 
+cases = {'zab': 1, 'hosp': 2, 'severe': 3, 'death': 4}
+vaccine_ids = {'AllVaccines': 99,
+                 'SputnikV': 1,
+                 'SputnikLite': 5,
+                 'EpiVacCorona': 3,
+                 'CoviVac': 4}
 
-with MSSQL() as mssql:
-    int_ve_df = mssql.extract_int_ve(ages_split=False)
-    int_ages_ve_df = mssql.extract_int_ve(ages_split=True)
-    general_ve_df = mssql.extract_general_ve()
-    months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')
+temp_age_dict = {'18-59': 18, '60+': 60, '18+': 99}
 
+
+def initial_data_extraction(**kwargs):
+    subject_value = kwargs.get('subject_value')
+    vaccine_value = kwargs.get('vaccine_value')
+    age_value = kwargs.get('age_value')
+    case_value = kwargs.get('case_value')
+
+    with MSSQL() as mssql:
+        # int_ve_df = mssql.extract_int_ve(ages_split=False)
+        # int_ages_ve_df = mssql.extract_int_ve(ages_split=True)
+        subject_id = mssql.cursor.execute(f'''select reg_id from dbo.REG_IDS 
+                                          where region = '{subject_value}' ''').fetchone()[0]
+        vaccine_id = vaccine_ids[vaccine_value]
+        case_id = cases[case_value]
+        age_id = temp_age_dict[age_value]
+        query = f'''
+        select sq1.data_point, sq1.region, sq1.age_group, sq1.vaccine,
+        sum(sq1.ve_zab) as ve_zab, sum(sq1.cil_zab) as cil_zab, sum(sq1.cih_zab) as cih_zab,
+        sum(sq1.ve_hosp) as ve_hosp, sum(sq1.cil_hosp) as cil_hosp, sum(sq1.cih_hosp) as cih_hosp,
+        sum(sq1.ve_severe) as ve_severe, sum(sq1.cil_severe) as cil_severe, sum(sq1.cih_severe) as cih_severe,
+        sum(sq1.ve_death) as ve_death, sum(sq1.cil_death) as cil_death, sum(sq1.cih_death) as cih_death
+        from
+        (select data_point, 
+        case when reg_id = {subject_id} then '{subject_value}' end as region,
+        case when age_id = {age_id} then '{age_value}' end as age_group,
+        case when vaccine_id = {vaccine_id} then '{vaccine_value}' end as vaccine,
+        
+        case when case_type = 1 then ve end as ve_zab,
+        case when case_type = 1 then cil end as cil_zab,
+        case when case_type = 1 then cih end as cih_zab,
+        
+        case when case_type = 2 then ve end as ve_hosp,
+        case when case_type = 2 then cil end as cil_hosp,
+        case when case_type = 2 then cih end as cih_hosp,
+        
+        case when case_type = 3 then ve end as ve_severe,
+        case when case_type = 3 then cil end as cil_severe,
+        case when case_type = 3 then cih end as cih_severe,
+        
+        case when case_type = 4 then ve end as ve_death,
+        case when case_type = 4 then cil end as cil_death,
+        case when case_type = 4 then cih end as cih_death             
+        from dbo.VE_CI 
+        where reg_id = {subject_id} and vaccine_id = {vaccine_id} and age_id = {age_id}
+        ) as sq1
+        group by sq1.data_point, sq1.region, sq1.vaccine, sq1.age_group'''
+
+        columns = mssql._get_columns()
+        columns.remove('vac_interval_group')
+        general_ve_df = mssql._query_to_df(query, columns)
+        months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')
+    return general_ve_df, months
+
+
+initial_values = {'subject_value': 'РФ', 'vaccine_value': 'SputnikV',
+                  'age_value': '18-59', 'case_value': 'zab'}
+general_ve_df, months = initial_data_extraction(**initial_values)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': "width=device-width, "
                                                       "initial-scale=1, maximum-scale=1, user-scalable=no"}])
 server = app.server
-app.layout = make_mobile_layout(months)
+app.layout = make_mobile_layout(months, initial_values)
 
 
 @app.callback(
@@ -64,19 +120,23 @@ app.layout = make_mobile_layout(months)
     Input('month_year', 'value')
 )
 def update_bar_chart(subject, vac_type, case, age, date_ru):
+    '''print(subject, vac_type, case, age)
+    vaccine_id, age_id = vaccine_ids[vac_type], int(age[:2])
+
+    with MSSQL() as mssql:
+        query = f"""select * from dbo.VE_CI
+                where vaccine_id = {vaccine_id} and age_id = {age_id}"""
+        general_ve_df = mssql.cursor.execute(query).fetchall()
+        months = reformat_date(general_ve_df['data_point'].unique(), delimiter='_')'''
+
     general_ve_chart = general_ve_df[general_ve_df['region'] == subject]
+    column = 've_' + case
+    ci_high_title = 'cih_' + case
+    ci_low_title = 'cil_' + case
 
-    data_points = general_ve_chart['data_point'].apply(lambda x: x.split('_')[0])
-
-    case_postfix = case
-    age_postfix = age_postfixes[age]
-    column = 've_' + case_postfix + age_postfix
-    ci_high_title = 'cih_' + case_postfix + age_postfix
-    ci_low_title = 'cil_' + case_postfix + age_postfix
-    vaccine = vaccines_dict[vac_type]
-
-    chart_data_v = general_ve_chart[general_ve_chart['vaccine'] == vaccine]
-    x_v = pd.to_datetime(data_points, format='%Y.%m')
+    chart_data_v = general_ve_chart[general_ve_chart['vaccine'] == vac_type]
+    data_points = chart_data_v['data_point'].apply(lambda x: x.split('_')[0])
+    x_v = pd.to_datetime(data_points)
     y_v = chart_data_v[column]
     ci = (y_v - chart_data_v[ci_low_title], chart_data_v[ci_high_title] - y_v)
     title_text_v = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19 <br>({vac_type},' \
@@ -106,14 +166,15 @@ def update_bar_chart(subject, vac_type, case, age, date_ru):
 def update_map(vac_type, case, age, date_ru, update_fig):
     map_data = general_ve_df[general_ve_df['region'] != 'РФ']
     map_data = map_data.fillna(0.0, axis=1)
+    print(map_data)
 
     if len(update_fig) == 0:
         raise PreventUpdate
     age_postfix = age_postfixes[age]
 
-    column = 've_' + case + age_postfix
+    column = 've_' + case
     date_en = reformat_date([date_ru], to_numeric=True, delimiter='.')[0]
-    map_data = map_data.query(f'vaccine == "{vaccines_dict[vac_type]}"')
+    map_data = map_data.query(f'vaccine == "{vac_type}"')
     map_data = map_data[map_data['data_point'].str.contains(date_en)]
     map_data.rename(columns={'region': 'name'}, inplace=True)
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age_groups[age]},' \
@@ -132,10 +193,11 @@ def update_map(vac_type, case, age, date_ru, update_fig):
     Input('month_year_int', 'value')
 )
 def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
+    with MSSQL() as mssql:
+        int_ve_df = mssql.extract_int_ve(subject, age, vac_type, ages_split=False)
+
     converted_dates = sorted(reformat_date(dates_list, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-    chart_data = int_ve_df.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
-                             f'age_group == "{age}"')
-    chart_data = chart_data.replace([None, np.nan, np.inf], 0)
+    chart_data = int_ve_df.replace([None, np.nan, np.inf], 0)
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, {age_groups[age]}, ' \
                  f'{subject})'
     fig = plot_int_bar_chart(chart_data, converted_dates, case, title_text)
@@ -155,13 +217,13 @@ def update_int_bar_chart2(subject, vac_type, case, age, dates):
     ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
                  3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
 
-    data = int_ages_ve_df.query(f'region == "{subject}" & vaccine == "{vaccines_dict[vac_type]}" &'
-                             f'age_group == "{ages_dict[age]}"')
+    with MSSQL() as mssql:
+        int_ages_ve_df = mssql.extract_int_ve(subject, ages_dict[age], vac_type, ages_split=True)
 
     converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
     title_text = f'ЭВ в отношении предотвращения {title_cases[case]} COVID-19<br>({vac_type}, ' \
                  f'{ages_dict[age]} лет, {subject})'
-    fig = plot_int_bar_chart2(data, converted_dates, case, title_text)
+    fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
     return fig
 
 
