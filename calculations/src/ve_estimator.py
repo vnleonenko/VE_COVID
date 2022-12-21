@@ -13,13 +13,29 @@ class VEEstimator:
         self.inf_vac = inf_vac_df
         self.pop = pop_df
 
+    def _ppv_correction(self, vac_pop_df, *args):
+        data_point, subject, vac_interval, age, vaccine, _, pop = args[0].values
+        if vaccine == 'AllVaccines':
+            return pop
+        else:
+            vac_to_exclude = vac_pop_df.query(f'data_point == "{data_point}" &'
+                                              f'region == "{subject}" &'
+                                              f'vac_interval_group == "{vac_interval}" &'
+                                              f'age_group == "{age}" & '
+                                              f'vaccine not in ["{vaccine}", "AllVaccines"]')
+            pop_corrected = pop - vac_to_exclude['vac_count'].sum()
+            return pop_corrected
+
     def _compute_ppv(self):
         columns = ['data_point', 'region', 'age_group', 'vac_interval_group', 'vaccine']
         ppv_df = self.vac.loc[:, columns]
         vac_pop_df = self.vac.merge(self.pop, on=['region', 'age_group'], how='left')
+        vac_pop_df['population'] = vac_pop_df[vac_pop_df.columns.values].apply(lambda row: self._ppv_correction(vac_pop_df, row),
+                                                              axis=1, result_type="expand")
         ppv_df['ppv'] = vac_pop_df['vac_count'] / vac_pop_df['population']
         ppv_df['ppv'] = ppv_df['ppv'].astype('float32')
         return ppv_df
+
 
     @staticmethod
     def get_ve_w_ci(args):
@@ -38,12 +54,35 @@ class VEEstimator:
         ci = [round(ci, 5) for ci in 1 - np.exp(glm_res.conf_int(alpha=0.05)).values[0]]
         return ve_estimation, ci[1], ci[0]
 
+    def _pcv_correction(self, zab_vac_df, *args):
+        args = args[0]
+        if args['vaccine'] == 'AllVaccines':
+            result = args[['count_zab', 'count_hosp', 'count_severe', 'count_death']].tolist()
+            return result
+        else:
+            zab_vac_to_exclude = zab_vac_df.query(f'data_point == "{args["data_point"]}" &'
+                                              f'region == "{args["region"]}" &'
+                                              f'vac_interval_group == "{args["vac_interval_group"]}" &'
+                                              f'age_group == "{args["age_group"]}" & '
+                                              f'vaccine not in ["{args["vaccine"]}", "AllVaccines"]')
+            vac_case = zab_vac_to_exclude[['count_vac_zab', 'count_vac_hosp',
+                                           'count_vac_severe', 'count_vac_death']].sum()
+            zab_cases = args[['count_zab', 'count_hosp', 'count_severe', 'count_death']]
+            cases = ['zab', 'hosp', 'severe', 'death']
+            result = []
+            for case in cases:
+                result.append(zab_cases['count_'+case] - vac_case['count_vac_'+case])
+            return result
+
     def compute_ve(self):
         ppv_data = self._compute_ppv()
         inf_vac_merged = self.inf_vac.merge(self.inf, on=['data_point', 'age_group', 'region'], how='left')
         merge_columns = ['data_point', 'region', 'age_group', 'vac_interval_group', 'vaccine']
         merged_df = ppv_data.merge(inf_vac_merged, on=merge_columns, how='outer')
         merged_df.replace([np.inf, -np.inf, np.nan], 0, inplace=True)
+        merged_df[['count_zab', 'count_hosp', 'count_severe', 'count_death']] = \
+            merged_df[merged_df.columns.values].apply(lambda row: self._pcv_correction(merged_df, row),
+                                                      axis=1, result_type="expand")
 
         # filter columns that should be integer
         int_columns = list(filter(lambda x: x not in merge_columns+['ppv'], merged_df.columns))
