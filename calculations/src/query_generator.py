@@ -2,7 +2,7 @@ import pandas as pd
 
 
 class QueryGenerator:
-    def __init__(self, age_groups, vac_interval_group=True, gender=False, subjects='all'):
+    def __init__(self, age_groups, vac_interval_group=True, gender=False, subjects='all', data_points='all'):
         self.age_groups = age_groups
         self.vac_interval_group = vac_interval_group
         if not self.vac_interval_group:
@@ -15,6 +15,7 @@ class QueryGenerator:
             self.data_point_filter = "like '%[B]%'"
             self.age_group_filter = "('20-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+')"
         self.subjects = subjects
+        self.data_points = data_points
 
     def query_pop_data(self):
         columns = ['region', 'age_group', 'population']
@@ -49,12 +50,12 @@ class QueryGenerator:
             res_query = f'''select sq2.* from
                         (select case when sq1.region like ' г. Санкт-Петербург' then 'г. Санкт-Петербург' 
                         else sq1.region end as region,
-                        sq1.age_group, sq1.population from ({res_query}) as sq1) as sq2
-                        where region in ('{"', '".join(self.subjects)}') '''
+                        sq1.age_group, sq1.population from ({res_query}) as sq1) as sq2'''
+        if self.subjects == 'all':
             return res_query, columns
-
-        res_query = f'''select sq1.* from ({res_query}) as sq1
-                    where region in ('{"', '".join(self.subjects)}')'''
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where region in ('{"', '".join(self.subjects)}')'''
 
         return res_query, columns
 
@@ -72,9 +73,13 @@ class QueryGenerator:
 
         res_query = self.group_by_subjects(columns, columns[:3], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
-        if self.subjects == 'all':
+
+        if self.subjects == 'all' or self.data_points == 'all':
             return res_query, columns
-        else:
+        elif self.data_points != 'all':
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where data_point in ('{"', '".join(self.data_points)}')'''
+        elif self.subjects != 'all':
             res_query = f'''select sq1.* from ({res_query}) as sq1
                         where region in ('{"', '".join(self.subjects)}')'''
         return res_query, columns
@@ -100,11 +105,15 @@ class QueryGenerator:
         res_query = self.group_by_subjects(columns, columns[:5], res_query)
         res_query = self.group_by_vaccines(columns, columns[:5], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
-        if self.subjects == 'all':
+
+        if self.subjects == 'all' or self.data_points == 'all':
             return res_query, columns
-        else:
+        elif self.data_points != 'all':
             res_query = f'''select sq1.* from ({res_query}) as sq1
-                                where region in ('{"', '".join(self.subjects)}')'''
+                        where data_point in ('{"', '".join(self.data_points)}')'''
+        elif self.subjects != 'all':
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where region in ('{"', '".join(self.subjects)}')'''
 
         return res_query, columns
 
@@ -126,9 +135,13 @@ class QueryGenerator:
         res_query = self.group_by_subjects(columns, columns[:5], res_query)
         res_query = self.group_by_vaccines(columns, columns[:5], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
-        if self.subjects == 'all':
+
+        if self.subjects == 'all' or self.data_points == 'all':
             return res_query, columns
-        else:
+        elif self.data_points != 'all':
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where data_point in ('{"', '".join(self.data_points)}')'''
+        elif self.subjects != 'all':
             res_query = f'''select sq1.* from ({res_query}) as sq1
                         where region in ('{"', '".join(self.subjects)}')'''
         return res_query, columns
@@ -176,7 +189,7 @@ class QueryGenerator:
     @staticmethod
     def group_by_vac_intervals(columns, groupby_columns, init_query):
         select_sq1_columns = ', '.join([f'sq1.{c}' if c != 'vac_interval_group'
-                                        else f"case when sq1.{c} not like '21_165_days' then '21_165_days' end as {c}"
+                                        else f"case when sq1.{c} not like '21_195_days' then '21_195_days' end as {c}"
                                         for c in columns])
         subquery1 = f'''select {select_sq1_columns} from ({init_query}) as sq1'''
 
