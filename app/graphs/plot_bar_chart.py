@@ -29,20 +29,19 @@ def generate_colorscale(y):
 
 
 def plot_vertical_bar_chart(x, y, ci, title_text):
+    print(y)
     bar_chart = go.Figure(data=[go.Bar(x=x, y=y,
                                        error_y=dict(type='data',
                                                     symmetric=False,
                                                     array=ci[1],
                                                     arrayminus=ci[0],
                                                     thickness=1.6),
+                                       marker={'color': y, 'colorscale': generate_colorscale(y),
+                                               'opacity': 0.8, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
                                        hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
                                                      "+%{error_y.array:.1%} "
                                                      "/ -%{error_y.arrayminus:.1%} "
                                                      "<extra></extra>")])
-    bar_chart.update_traces(marker_color='rgb(158,202,225)',
-                            marker_line_color='rgb(8,48,107)',
-                            marker_line_width=1.5,
-                            opacity=0.6)
     bar_chart.update_xaxes(tickformat='%m.%Y')
     bar_chart.update_layout(paper_bgcolor="white",
                             autosize=False,
@@ -57,18 +56,10 @@ def plot_vertical_bar_chart(x, y, ci, title_text):
         xaxis=dict(
             rangeselector=dict(
                 buttons=list([
-                    dict(count=6,
-                         label="6м",
-                         step="month",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1г",
-                         step="year",
-                         stepmode="todate"),
-                    dict(label="все",
-                         step="all")]),
-                yanchor='middle'
-            ),
+                    dict(count=6,  label="6м", step="month", stepmode="backward"),
+                    dict(count=1,  label="1г", step="year", stepmode="todate"),
+                    dict(label="все", step="all")]),
+                yanchor='middle'),
             type="date"))
     return bar_chart
 

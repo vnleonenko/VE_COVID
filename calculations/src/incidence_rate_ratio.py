@@ -19,10 +19,10 @@ def group_by_vac_int(df, group_columns):
 
 
 def read_input_data():
-    vac = pd.read_csv('../output/vac_df.csv', encoding='cp1251', delimiter=',')
-    zab = pd.read_csv('../output/zab_df.csv', encoding='cp1251', delimiter=',')
-    zab_vac = pd.read_csv('../output/zab_vac_df.csv', encoding='cp1251', delimiter=',')
-    pop = pd.read_csv('../output/pop_df.csv', encoding='cp1251', delimiter=',')
+    vac = pd.read_csv('../output/vaccinated/vac_df.csv', encoding='cp1251', delimiter=',')
+    zab = pd.read_csv('../output/infected/zab_df.csv', encoding='cp1251', delimiter=',')
+    zab_vac = pd.read_csv('../output/infected_vaccinated/zab_vac_df.csv', encoding='cp1251', delimiter=',')
+    pop = pd.read_csv('../output/population/pop_df.csv', encoding='cp1251', delimiter=',')
 
     return {'vac': vac, 'zab': zab, 'zab_vac': zab_vac, 'pop': pop}
 

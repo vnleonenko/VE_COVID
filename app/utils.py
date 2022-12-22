@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+from database_connector import MSSQL
 
 
 def parse_csv(file_path, encoding='utf-8'):
@@ -135,3 +136,14 @@ def get_strain_data(csv_path):
     grouped_data['pango_lineage'] = grouped_data['pango_lineage'].apply(calc_virus_ratio)
     grouped_data['pangolin_version'] = grouped_data['pangolin_version'].apply(calc_virus_ratio)
     return grouped_data
+
+
+def get_months():
+    with MSSQL() as mssql:
+        month_query = f'''select distinct(data_point) from dbo.VE_TEST
+                      where data_point not like '%[B]%' '''
+        # and data_point not like '%[X]%'
+        months_en = mssql.cursor.execute(month_query).fetchall()
+        months_en = sorted([t[0] for t in months_en], key=lambda x: x.split('_'))
+        months_ru = reformat_date(months_en, delimiter='_')
+    return months_ru
