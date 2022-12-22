@@ -18,19 +18,7 @@ class MSSQL:
     def __enter__(self):
         return self
 
-    @staticmethod
-    def _get_ve_columns():
-        columns = ['data_point', 'region', 'vac_interval_group', 'vaccine']
-        ages = ['_18_59', '_60', '_total']
-        cases = ['_zab', '_hosp', '_severe', '_death']
-        prefix = ['ve', 'cil', 'cih']
-        for age in ages:
-            for case in cases:
-                for pref in prefix:
-                    columns.append(pref + case + age)
-        return columns
-
-    def _query_to_df(self, query, columns, *args):
+    def query_to_df(self, query, columns, *args):
         query_res = list(map(list, self.cursor.execute(query, args).fetchall()))
         return pd.DataFrame(query_res, columns=columns)
 
@@ -45,117 +33,62 @@ class MSSQL:
                 columns.append(pref + case)
         return columns
 
-    def extract_int_ve(self, subject, age, vaccine, ages_split=True):
-        if ages_split:
-            data_point_clause = "like '%[B]%'"
-        else:
-            data_point_clause = "not like '%[B]%'"
+    def extract_ve(self, age, vaccine=None, subject=None, age_groups=3, vac_intervals=6):
+        data_point_clause = ''
+        if age_groups > 3 and vac_intervals == 1:
+            data_point_clause = "like '%[B]%' and vac_interval_group = '21_195_days'"
+        elif age_groups == 3 and vac_intervals == 1:
+            data_point_clause = "not like '%[B]%' and vac_interval_group = '21_195_days'"
+        elif age_groups == 3 and vac_intervals == 6:
+            data_point_clause = "not like '%[B]%' and vac_interval_group not like '21_195_days'"
+        elif age_groups > 3 and vac_intervals == 6:
+            data_point_clause = "like '%[B]%' and vac_interval_group not like '21_195_days'"
+
         query = f'''select * from dbo.VE_TEST where data_point {data_point_clause}
-                and region = '{subject}' and age_group = '{age}' and vaccine = '{vaccine}' '''
-        df = self._query_to_df(query, self._get_columns())
+                and age_group = '{age}'  '''
+        if subject is not None:
+            query = query + f'''and region = '{subject}' '''
+        if vaccine is not None:
+            query = query + f'''and vaccine = '{vaccine}' '''
 
-        return df
+        df = self.query_to_df(query, self._get_columns())
 
-    def extract_general_ve(self):
-        query = f'''select sq1.data_point, sq1.region, sq1.vaccine_id as vaccine,
-                    sum(ve_zab_18_59) as ve_zab_18_59,
-                    sum(cil_zab_18_59) as cil_zab_18_59,
-                    sum(cih_zab_18_59) as cih_zab_18_59,
-                    sum(ve_zab_60) as ve_zab_60,
-                    sum(cil_zab_60) as cil_zab_60,
-                    sum(cih_zab_60) as cih_zab_60,
-                    sum(ve_zab_total) as ve_zab_total,
-                    sum(cil_zab_total) as cil_zab_total,
-                    sum(cih_zab_total) as cih_zab_total,
-
-                    sum(ve_hosp_18_59) as ve_hosp_18_59,
-                    sum(cil_hosp_18_59) as cil_hosp_18_59,
-                    sum(cih_hosp_18_59) as cih_hosp_18_59,
-                    sum(ve_hosp_60) as ve_hosp_60,
-                    sum(cil_hosp_60) as cil_hosp_60,
-                    sum(cih_hosp_60) as cih_hosp_60,
-                    sum(ve_hosp_total) as ve_hosp_total,
-                    sum(cil_hosp_total) as cil_hosp_total,
-                    sum(cih_hosp_total) as cih_hosp_total,
-
-                    sum(ve_severe_18_59) as ve_severe_18_59,
-                    sum(cil_severe_18_59) as cil_severe_18_59,
-                    sum(cih_severe_18_59) as cih_severe_18_59,
-                    sum(ve_severe_60) as ve_severe_60,
-                    sum(cil_severe_60) as cil_severe_60,
-                    sum(cih_severe_60) as cih_severe_60,
-                    sum(ve_severe_total) as ve_severe_total,
-                    sum(cil_severe_total) as cil_severe_total,
-                    sum(cih_severe_total) as cih_severe_total,
-
-                    sum(ve_death_18_59) as ve_death_18_59,
-                    sum(cil_death_18_59) as cil_death_18_59,
-                    sum(cih_death_18_59) as cih_death_18_59,
-                    sum(ve_death_60) as ve_death_60,
-                    sum(cil_death_60) as cil_death_60,
-                    sum(cih_death_60) as cih_death_60,
-                    sum(ve_death_total) as ve_death_total,
-                    sum(cil_death_total) as cil_death_total,
-                    sum(cih_death_total) as cih_death_total
-
-                    from
-                        (select  dbo.VE_CI.data_point, dbo.VE_CI.vaccine_id, dbo.REG_IDS.*,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.ve else 0 end as ve_zab_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.ve else 0 end as ve_zab_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.ve else 0 end as ve_zab_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cil else 0 end as cil_zab_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cil else 0 end as cil_zab_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cil else 0 end as cil_zab_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cih else 0 end as cih_zab_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cih else 0 end as cih_zab_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 1) then dbo.VE_CI.cih else 0 end as cih_zab_total,
-
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.ve else 0 end as ve_hosp_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.ve else 0 end as ve_hosp_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.ve else 0 end as ve_hosp_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cil else 0 end as cil_hosp_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cil else 0 end as cil_hosp_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cil else 0 end as cil_hosp_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cih else 0 end as cih_hosp_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cih else 0 end as cih_hosp_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 2) then dbo.VE_CI.cih else 0 end as cih_hosp_total,
-
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.ve else 0 end as ve_severe_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.ve else 0 end as ve_severe_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.ve else 0 end as ve_severe_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cil else 0 end as cil_severe_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cil else 0 end as cil_severe_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cil else 0 end as cil_severe_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cih else 0 end as cih_severe_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cih else 0 end as cih_severe_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 3) then dbo.VE_CI.cih else 0 end as cih_severe_total,
-
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.ve else 0 end as ve_death_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.ve else 0 end as ve_death_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.ve else 0 end as ve_death_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cil else 0 end as cil_death_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cil else 0 end as cil_death_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cil else 0 end as cil_death_total,
-                        case when (dbo.VE_CI.age_id = 18 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cih else 0 end as cih_death_18_59,
-                        case when (dbo.VE_CI.age_id = 60 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cih else 0 end as cih_death_60,
-                        case when (dbo.VE_CI.age_id = 99 and dbo.VE_CI.case_type = 4) then dbo.VE_CI.cih else 0 end as cih_death_total
-
-                        from dbo.VE_CI
-                        join dbo.REG_IDS
-                        on dbo.VE_CI.reg_id = dbo.REG_IDS.reg_id
-                    ) as sq1
-                    group by sq1.data_point, sq1.vaccine_id, sq1.region
-                    order by sq1.data_point, sq1.vaccine_id, sq1.region
-                    '''
-
-        columns = self._get_ve_columns()
-        columns.remove('vac_interval_group')
-        df = self._query_to_df(query, columns)
-        vaccines = {1: 'SputnikV', 3: 'EpiVacCorona', 4: 'CoviVac', 5: 'SputnikLite', 99: 'AllVaccines'}
-        df['vaccine'] = df['vaccine'].replace(vaccines)
         return df
 
     def __exit__(self, *args, **kwargs):
         self.connection.close()
+
+
+"""query = f'''
+        select sq1.data_point, sq1.region, sq1.age_group, sq1.vaccine,
+        sum(sq1.ve_zab) as ve_zab, sum(sq1.cil_zab) as cil_zab, sum(sq1.cih_zab) as cih_zab,
+        sum(sq1.ve_hosp) as ve_hosp, sum(sq1.cil_hosp) as cil_hosp, sum(sq1.cih_hosp) as cih_hosp,
+        sum(sq1.ve_severe) as ve_severe, sum(sq1.cil_severe) as cil_severe, sum(sq1.cih_severe) as cih_severe,
+        sum(sq1.ve_death) as ve_death, sum(sq1.cil_death) as cil_death, sum(sq1.cih_death) as cih_death
+        from
+        (select data_point, 
+        case when reg_id = {subject_id} then '{subject_value}' end as region,
+        case when age_id = {age_id} then '{age_value}' end as age_group,
+        case when vaccine_id = {vaccine_id} then '{vaccine_value}' end as vaccine,
+
+        case when case_type = 1 then ve end as ve_zab,
+        case when case_type = 1 then cil end as cil_zab,
+        case when case_type = 1 then cih end as cih_zab,
+
+        case when case_type = 2 then ve end as ve_hosp,
+        case when case_type = 2 then cil end as cil_hosp,
+        case when case_type = 2 then cih end as cih_hosp,
+
+        case when case_type = 3 then ve end as ve_severe,
+        case when case_type = 3 then cil end as cil_severe,
+        case when case_type = 3 then cih end as cih_severe,
+
+        case when case_type = 4 then ve end as ve_death,
+        case when case_type = 4 then cil end as cil_death,
+        case when case_type = 4 then cih end as cih_death             
+        from dbo.VE_CI 
+        where reg_id = {subject_id} and vaccine_id = {vaccine_id} and age_id = {age_id}
+        ) as sq1
+        group by sq1.data_point, sq1.region, sq1.vaccine, sq1.age_group'''"""
 
 
