@@ -7,8 +7,8 @@ locale.setlocale(locale.LC_TIME, 'ru_RU')
 
 
 def generate_colorscale(y):
-    negative_y = sum(abs(y[y < 0]))
-    positive_y = sum(y[y > 0])
+    negative_y = sum(abs(y[(y < 0)]))
+    positive_y = sum(y[(y > 0)])
     if positive_y == 0 and negative_y == 0:
         colorscale = [(0, "#c4c4c4"), (1, "#c4c4c4")]
     elif negative_y == 0:
@@ -29,15 +29,15 @@ def generate_colorscale(y):
 
 
 def plot_vertical_bar_chart(x, y, ci, title_text):
-    print(y)
-    bar_chart = go.Figure(data=[go.Bar(x=x, y=y,
+    bar_chart = go.Figure(data=[go.Bar(x=x, y=y.fillna(0),
+                                       marker={'color': y.fillna(0),
+                                               'colorscale': generate_colorscale(y),
+                                               'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
                                        error_y=dict(type='data',
                                                     symmetric=False,
                                                     array=ci[1],
                                                     arrayminus=ci[0],
-                                                    thickness=1.6),
-                                       marker={'color': y, 'colorscale': generate_colorscale(y),
-                                               'opacity': 0.8, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
+                                                    thickness=1.4,),
                                        hovertemplate="<br> ЭВ: %{y:.1%}<br> ДИ: "
                                                      "+%{error_y.array:.1%} "
                                                      "/ -%{error_y.arrayminus:.1%} "
@@ -144,6 +144,7 @@ def plot_int_bar_chart2(data, dates, case, title_text):
         y = y[['ve_'+case, 'cil_'+case, 'cih_'+case]]
         cih = y['cih_'+case] - y['ve_'+case]
         cil = y['ve_'+case] - y['cil_'+case]
+        print(y['ve_'+case])
         bar_chart = go.Bar(x=x, y=y['ve_'+case], width=0.6, showlegend=False,
                            marker={'color': y['ve_'+case].fillna(0),
                                    'colorscale': generate_colorscale(y['ve_'+case]),

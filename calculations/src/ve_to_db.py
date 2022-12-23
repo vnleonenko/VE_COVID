@@ -6,7 +6,7 @@ from connector import MSSQLConnector
 
 
 if __name__ == "__main__":
-    csv_path = '../output/ve/ve_3_age_groups_0_vac_intervals_cor.csv'
+    csv_path = '../output/ve/ve_3_6.csv'
 
     ve_df = pd.read_csv(csv_path, encoding='cp1251', delimiter=';')
     columns = ve_df.columns
