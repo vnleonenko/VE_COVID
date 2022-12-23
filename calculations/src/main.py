@@ -6,7 +6,8 @@ from query_generator import QueryGenerator
 
 def main():
     with MSSQLConnector() as con:
-        query_gen = QueryGenerator(age_groups=3, vac_interval_group=False, subjects='all')
+        query_gen = QueryGenerator(age_groups=3, vac_interval_group=True, subjects=['Московская область', 'РФ',
+                                                                                    'г. Санкт-Петербург'])
         data_processor = DataProcessor(con.cursor)
         zab_query, zab_columns = query_gen.query_zab_data()
         vac_query, vac_columns = query_gen.query_vac_data()

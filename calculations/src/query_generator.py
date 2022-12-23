@@ -74,14 +74,17 @@ class QueryGenerator:
         res_query = self.group_by_subjects(columns, columns[:3], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
 
-        if self.subjects == 'all' or self.data_points == 'all':
-            return res_query, columns
-        elif self.data_points != 'all':
-            res_query = f'''select sq1.* from ({res_query}) as sq1
-                        where data_point in ('{"', '".join(self.data_points)}')'''
-        elif self.subjects != 'all':
+        if self.subjects == 'all':
+            pass
+        else:
             res_query = f'''select sq1.* from ({res_query}) as sq1
                         where region in ('{"', '".join(self.subjects)}')'''
+        if self.data_points == 'all':
+            pass
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where data_point in ('{"', '".join(self.data_points)}')'''
+
         return res_query, columns
 
     def query_zab_vac_data(self):
@@ -106,14 +109,16 @@ class QueryGenerator:
         res_query = self.group_by_vaccines(columns, columns[:5], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
 
-        if self.subjects == 'all' or self.data_points == 'all':
-            return res_query, columns
-        elif self.data_points != 'all':
-            res_query = f'''select sq1.* from ({res_query}) as sq1
-                        where data_point in ('{"', '".join(self.data_points)}')'''
-        elif self.subjects != 'all':
+        if self.subjects == 'all':
+            pass
+        else:
             res_query = f'''select sq1.* from ({res_query}) as sq1
                         where region in ('{"', '".join(self.subjects)}')'''
+        if self.data_points == 'all':
+            pass
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where data_point in ('{"', '".join(self.data_points)}')'''
 
         return res_query, columns
 
@@ -136,14 +141,16 @@ class QueryGenerator:
         res_query = self.group_by_vaccines(columns, columns[:5], res_query)
         res_query = f'''select sq1.* from ({res_query}) as sq1'''
 
-        if self.subjects == 'all' or self.data_points == 'all':
-            return res_query, columns
-        elif self.data_points != 'all':
-            res_query = f'''select sq1.* from ({res_query}) as sq1
-                        where data_point in ('{"', '".join(self.data_points)}')'''
-        elif self.subjects != 'all':
+        if self.subjects == 'all':
+            pass
+        else:
             res_query = f'''select sq1.* from ({res_query}) as sq1
                         where region in ('{"', '".join(self.subjects)}')'''
+        if self.data_points == 'all':
+            pass
+        else:
+            res_query = f'''select sq1.* from ({res_query}) as sq1
+                        where data_point in ('{"', '".join(self.data_points)}')'''
         return res_query, columns
 
     def group_by_age(self, columns, groupby_columns, init_query):
