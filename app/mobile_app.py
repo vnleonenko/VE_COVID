@@ -57,6 +57,7 @@ def update_bar_chart(subject, vac_type, case, age, date_ru):
     with MSSQL() as mssql:
         general_ve_df = mssql.extract_ve(age, age_groups=3, vac_intervals=1)
 
+    # general_ve_df = general_ve_df.replace([None, np.nan, np.inf], 0)
     general_ve_chart = general_ve_df[general_ve_df['region'] == subject]
     column = 've_' + case
     ci_high_title = 'cih_' + case
