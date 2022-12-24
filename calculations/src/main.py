@@ -6,6 +6,7 @@ from query_generator import QueryGenerator
 
 def main():
     with MSSQLConnector() as con:
+
         query_gen = QueryGenerator(age_groups=9, vac_interval_group=True, subjects=['Московская область', 'РФ',
                                    'г. Санкт-Петербург'], data_points=['2022.08.B_16-09-2022',
                                                                        '2022.09.B_11-11-2022',
