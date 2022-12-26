@@ -1,18 +1,18 @@
 import plotly.graph_objects as go
 
 
-map_colorbar = { 'bgcolor': 'white',
-                 'orientation': 'v',
-                 'xanchor': 'center',
-                 'yanchor': 'middle',
-                 'tickmode': 'auto',
-                 'tickformat': ".0%",
-                 'ticks': 'outside',
-                 'tickfont': {'size': 13},
-                 'xpad': 20,
-                 'len': 0.7,
-                 'title': {'text': 'ЭB',
-                           'font': {'size': 12}}}
+map_colorbar = {'bgcolor': 'white',
+                'orientation': 'v',
+                'xanchor': 'center',
+                'yanchor': 'middle',
+                'tickmode': 'auto',
+                'tickformat': ".0%",
+                'ticks': 'outside',
+                'tickfont': {'size': 13},
+                'xpad': 20,
+                'len': 0.7,
+                'title': {'text': 'ЭB',
+                          'font': {'size': 12}}}
 map_colorscale = [(0, "#c4c4c4"), (0.25, "#c4c4c4"), (0.5, "#c4c4c4"),
                   (0.65, "#ff3333"), (0.85, "#ffff66"), (1, "#81c662")]
 
@@ -22,7 +22,8 @@ def plot_choropleth_map(borders, data, column_label, locations_label, title_text
                                                locations=data[locations_label],
                                                featureidkey='properties.'+locations_label,
                                                z=data[column_label],
-                                               zmid=0,
+                                               zmax=1,
+                                               zmin=-1,
                                                colorscale=map_colorscale,
                                                hovertemplate=' Субъект: %{location}<br> '
                                                              'ЭВ: %{z:.1%}<extra></extra>',

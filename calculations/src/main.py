@@ -2,6 +2,16 @@ from connector import MSSQLConnector
 from ve_estimator import VEEstimator
 from data_processor import DataProcessor
 from query_generator import QueryGenerator
+from argparse import ArgumentParser
+
+
+def get_cli_args():
+    parser = ArgumentParser(description="Calculate vaccination efficacy using Generalized Linear Model",
+                            allow_abbrev=False)
+    parser.add_argument("--age_groups")
+    parser.add_argument("--vac_intervals", action='store_true')
+    parser.add_argument("--data_points")
+    parser.add_argument("--subjects")
 
 
 def main():
