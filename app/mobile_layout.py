@@ -18,8 +18,8 @@ covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
                {'label': 'с тяжелой формой', 'value': 'severe'},
                {'label': 'умершие', 'value': 'death'}]
 
-modeBarButtonsToRemove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
-config = dict(displaylogo=False,  responsive=True,  modeBarButtonsToRemove=modeBarButtonsToRemove)
+mode_bar_buttons_to_remove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
+config = dict(displaylogo=False,  responsive=True,  modeBarButtonsToRemove=mode_bar_buttons_to_remove)
 
 subjects = [{'label': 'Российская Федерация', 'value': 'РФ', },
             {'label': 'г. Санкт-Петербург', 'value': 'г. Санкт-Петербург', },
@@ -88,7 +88,7 @@ def make_mobile_layout(months, initial_values):
                                         html.Label('Месяц и год для интервальной ЭВ ', className='dropdown-label'),
                                         dmc.MultiSelect(
                                             description="Выберите до 4х различных месяцев",
-                                            value=months[1:3],
+                                            value=months[:2],
                                             data=months,
                                             maxSelectedValues=4,
                                             dropdownPosition='top',
@@ -169,7 +169,7 @@ def make_mobile_layout(months, initial_values):
                                     type="circle")
                             ], className='map-container shadow p-3 mb-5 bg-white rounded')
                         ], xs=12, md=12, lg=8, xl=8),
-                        # col2 hor bar chart
+                        # col2 horizontal bar chart
                         dbc.Col([
                             dcc.Graph(id='bar_chart_h',
                                       config=config,
@@ -178,11 +178,6 @@ def make_mobile_layout(months, initial_values):
                     ])
                 ], xs=11, lg=11)
             ], justify='evenly'),
-            dcc.Store(id='store-data', storage_type='session'),
-            dcc.Store(id='store-chart-data', storage_type='session'),
-            dcc.Store(id='store-int-data', storage_type='session'),
-            dcc.Store(id='store-int-data2', storage_type='session'),
-            html.Div(id='test-div')
         ],  style={'marginLeft': '0px', 'marginRight': '0px'},  className='app-div-container')
     ], fluid=True, className='container-fluid')
     return layout

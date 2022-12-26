@@ -40,8 +40,8 @@ initial_values = {'subject_value': 'РФ', 'vaccine_value': 'SputnikV',
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': "width=device-width, "
                        "initial-scale=1, maximum-scale=1, user-scalable=no"}])
-server = app.server
 app.layout = make_mobile_layout(get_months(), initial_values)
+server = app.server
 
 
 @app.callback(
@@ -57,13 +57,12 @@ def update_bar_chart(subject, vac_type, case, age, date_ru):
     with MSSQL() as mssql:
         general_ve_df = mssql.extract_ve(age, age_groups=3, vac_intervals=1)
 
-    # general_ve_df = general_ve_df.replace([None, np.nan, np.inf], 0)
     general_ve_chart = general_ve_df[general_ve_df['region'] == subject]
     column = 've_' + case
     ci_high_title = 'cih_' + case
     ci_low_title = 'cil_' + case
 
-    chart_data_v = general_ve_chart[general_ve_chart['vaccine'] == vac_type]
+    chart_data_v = general_ve_chart.query(f'vaccine == "{vac_type}"')
     data_points = chart_data_v['data_point'].apply(lambda x: x.split('_')[0])
     x_v = pd.to_datetime(data_points)
     y_v = chart_data_v[column]
@@ -94,11 +93,12 @@ def update_bar_chart(subject, vac_type, case, age, date_ru):
 def update_map(vac_type, case, age, date_ru, update_fig):
     with MSSQL() as mssql:
         general_ve_map_df = mssql.extract_ve(age, vac_type, age_groups=3, vac_intervals=1)
-    map_data = general_ve_map_df[general_ve_map_df['region'] != 'РФ']
-    map_data = map_data.replace([None, np.nan, np.inf], 0)
 
     if len(update_fig) == 0:
         raise PreventUpdate
+
+    map_data = general_ve_map_df[general_ve_map_df['region'] != 'РФ']
+    map_data = map_data.replace([None, np.nan, np.inf], 0)
 
     column = 've_' + case
     date_en = reformat_date([date_ru], to_numeric=True, delimiter='.')[0]
@@ -125,10 +125,9 @@ def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
         int_ve_df = mssql.extract_ve(age, vac_type, subject=subject, age_groups=3, vac_intervals=6)
 
     converted_dates = sorted(reformat_date(dates_list, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-    chart_data = int_ve_df.replace([None, np.nan, np.inf], 0)
     title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
                  f'({vaccines_dict[vac_type]}, {age_groups[age]}, {subject})'
-    fig = plot_int_bar_chart(chart_data, converted_dates, case, title_text)
+    fig = plot_int_bar_chart(int_ve_df, converted_dates, case, title_text)
 
     return fig
 

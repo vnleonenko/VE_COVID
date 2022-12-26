@@ -29,7 +29,7 @@ def generate_colorscale(y):
 
 
 def plot_vertical_bar_chart(x, y, ci, title_text):
-    bar_chart = go.Figure(data=[go.Bar(x=x, y=y.fillna(0),
+    bar_chart = go.Figure(data=[go.Bar(x=x, y=y,
                                        marker={'color': y.fillna(0),
                                                'colorscale': generate_colorscale(y),
                                                'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
@@ -105,7 +105,7 @@ def plot_int_bar_chart(data, dates, case, title_text):
         cih = y[cih_title] - y[ve_title]
         cil = y[ve_title] - y[cil_title]
         bar_chart = go.Bar(x=x, y=y[ve_title], width=0.6, showlegend=False,
-                           marker={'color': y[ve_title],
+                           marker={'color': y[ve_title].fillna(0),
                                    'colorscale': generate_colorscale(y[ve_title]),
                                    'opacity': 0.6, 'line': {'color': 'rgb(8,48,107)', 'width': 1}},
                            error_y=dict(type='data',
@@ -144,7 +144,7 @@ def plot_int_bar_chart2(data, dates, case, title_text):
         y = y[['ve_'+case, 'cil_'+case, 'cih_'+case]]
         cih = y['cih_'+case] - y['ve_'+case]
         cil = y['ve_'+case] - y['cil_'+case]
-        print(y['ve_'+case])
+        # print(y['ve_'+case])
         bar_chart = go.Bar(x=x, y=y['ve_'+case], width=0.6, showlegend=False,
                            marker={'color': y['ve_'+case].fillna(0),
                                    'colorscale': generate_colorscale(y['ve_'+case]),

@@ -6,14 +6,13 @@ from connector import MSSQLConnector
 
 
 if __name__ == "__main__":
-    csv_path = '../output/ve/ve_3_6.csv'
+    csv_path = '../output/ve/ve_9_6_new_dates.csv'
 
     ve_df = pd.read_csv(csv_path, encoding='cp1251', delimiter=';')
-    columns = ve_df.columns
     ve_df.iloc[:, 5:] = ve_df.iloc[:, 5:].astype('float64')
     ve_df = ve_df.replace([np.nan, -np.inf, np.inf], None)
     table_name = 'dbo.VE_TEST'
-    values = ','.join(['?' for _ in range(len(columns))])
+    values = ','.join(['?' for _ in range(len(ve_df.columns))])
     insert_query = f'''insert into {table_name} values ({values})'''
 
     with MSSQLConnector() as con:
@@ -22,4 +21,3 @@ if __name__ == "__main__":
                 con.cursor.execute(insert_query, ve_df.iloc[i, :].tolist())
             except pyodbc.IntegrityError as e:
                 print(e)
-                pass
