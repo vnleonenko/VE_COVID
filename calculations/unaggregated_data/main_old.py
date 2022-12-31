@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from utils import read_file
+from utils_old import read_file
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils_old import count_healthy_sample, count_fully_vac_sample, get_inf_vac_ids, count_inf_vac_sample
