@@ -30,10 +30,7 @@ if __name__ == "__main__":
     fully_vac_traj = fully_vac_traj[~inf_feb_mask]
 
     # получаем последние записи полностью вакцинированных пациентов
-    # add_period_from_last_record работает очень долго, поэтому выгружен уже сформированный этой функцией файл,
-    # который можно просто прочитать
-    fully_vac = pd.read_csv('fully_vac_last_records.csv')
-    # fully_vac = add_period_from_last_record(fully_vac_traj, inf_feb)
+    fully_vac = add_period_from_last_record(fully_vac_traj, inf_feb)
 
     # выбираем записи, которые внесены менее, чем 6 месяцев назад
     fully_vac_sample_6m = fully_vac[fully_vac['months_diff'] <= 6]
