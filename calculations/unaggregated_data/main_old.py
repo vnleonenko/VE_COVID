@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from utils import read_file
+from utils_old import read_file
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils_old import count_healthy_sample, count_fully_vac_sample, get_inf_vac_ids, count_inf_vac_sample
@@ -8,7 +8,7 @@ from utils_old import plot_ratio_plt, get_fully_vaccinated_ids, add_period_from_
 
 
 if __name__ == "__main__":
-    dest_folder = 'data'
+    dest_folder = 'initial_data'
     folder_path = f'./{dest_folder}/'
     region_ids = read_file(folder_path + 'region_id.tsv')
     vaccine_code = read_file(folder_path + 'vaccine_code.tsv')
@@ -20,16 +20,21 @@ if __name__ == "__main__":
 
     # убираем заболевших в феврале
     data_wo_feb = pd.concat([data, inf_feb]).drop_duplicates(keep=False)
-    data_wo_feb['tyazh_code'].replace(np.nan, 0, inplace=True)
+    data_wo_feb['tyazh_code'] = data_wo_feb['tyazh_code'].replace(np.nan, 0)
 
     fully_vac_ids = get_fully_vaccinated_ids(data_wo_feb)
     fully_vac_traj = data[data['id'].isin(fully_vac_ids)]
+
     # убираем заболевших в феврале
     inf_feb_mask = (fully_vac_traj['id'].isin(inf_feb['id'])) & (fully_vac_traj['event_type'] == 'i')
     fully_vac_traj = fully_vac_traj[~inf_feb_mask]
-    # fully_vac_traj = pd.concat([fully_vac_traj, inf_feb]).drop_duplicates(keep=False)
+
     # получаем последние записи полностью вакцинированных пациентов
-    fully_vac = add_period_from_last_record(fully_vac_traj, inf_feb)
+    # add_period_from_last_record работает очень долго, поэтому выгружен уже сформированный этой функцией файл,
+    # который можно просто прочитать
+    fully_vac = pd.read_csv('fully_vac_last_records.csv')
+    # fully_vac = add_period_from_last_record(fully_vac_traj, inf_feb)
+
     # выбираем записи, которые внесены менее, чем 6 месяцев назад
     fully_vac_sample_6m = fully_vac[fully_vac['months_diff'] <= 6]
     fully_vac_sample = count_fully_vac_sample(inf_feb, fully_vac_sample_6m['id'].unique())
@@ -37,12 +42,12 @@ if __name__ == "__main__":
     # здоровые, которые заболели в феврале, и имеют 1 запись
     healthy_sample, healthy_sample_ids = count_healthy_sample(data)
     healthy_traj = data[data['id'].isin(healthy_sample_ids)]
+
     # убираем из датафрейма здоровых, полностью вакцинированных и заразившихся в феврале
     inf_vac_traj = data[~(data['id'].isin(healthy_sample_ids)) | (data['id'].isin(fully_vac_ids))]
     inf_vac_traj = inf_vac_traj[~((inf_vac_traj['id'].isin(inf_feb['id'])) &
                                   (inf_vac_traj['event_type'] == 'i'))]
 
-    # inf_vac_traj = pd.concat([data, healthy_traj, fully_vac_traj, inf_feb]).drop_duplicates(keep=False)
     # добавляем столбец months_diff для сортировки по периоду, прошедшему с последней записи
     inf_vac_last_records = add_period_from_last_record(inf_vac_traj, inf_feb)
     # получаем словарь, где ключ - временные отрезки (6, 9, 12, 15), значения - id пациентов
@@ -65,12 +70,7 @@ if __name__ == "__main__":
     for i in range(len(inf_vac_titles)):
         dfs.append(pd.read_csv(f'./zab_vac_df_{i}.csv'))'''
 
-    dfs = [healthy_sample, fully_vac_sample, inf_vac_samples[0]]
+    dfs = [healthy_sample, fully_vac_sample, inf_vac_samples['<6']]
     # dfs = list(inf_vac_samples.values())
     plot_ratio_plt(dfs, subject_id, age_cats, region_ids, df_titles)
     # plot_ratio_plt(dfs, subject_id, age_cats, region_ids, inf_vac_titles)
-
-
-
-
-

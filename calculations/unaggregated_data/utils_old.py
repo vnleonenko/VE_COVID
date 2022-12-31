@@ -104,7 +104,7 @@ def count_inf_vac_sample(inf_df, ids):
 
 
 def add_period_from_last_record(df, inf_feb):
-    last_records = df.groupby(by='id').agg({'id': lambda x: x.iloc[-1],
+    last_records = df.groupby(by='id', as_index=False).agg({'id': lambda x: x.iloc[-1],
                                           'event_date': lambda x: x.iloc[-1],
                                           'event_type': lambda x: x.iloc[-1],
                                           'age_cat': lambda x: x.iloc[-1],
@@ -115,84 +115,13 @@ def add_period_from_last_record(df, inf_feb):
 
     last_records = last_records.merge(inf_feb[['id', 'event_date', 'event_type']],
                                       on='id', how='inner', suffixes=('_lr', '_feb'))
-    last_records['event_date_lr'] = pd.to_datetime(last_records['event_date_lr'],
-                                                             errors='coerce', format='%Y-%m-%d')
-    last_records['event_date_feb'] = pd.to_datetime(last_records['event_date_feb'],
-                                                              errors='coerce', format='%Y-%m-%d')
+    last_records['event_date_lr'] = pd.to_datetime(last_records['event_date_lr'], errors='coerce', format='%Y-%m-%d')
+    last_records['event_date_feb'] = pd.to_datetime(last_records['event_date_feb'], errors='coerce', format='%Y-%m-%d')
     infection_date = last_records['event_date_feb'].dt.date
     last_vac_date = last_records['event_date_lr'].dt.date
 
     last_records['months_diff'] = (infection_date - last_vac_date) / np.timedelta64(1, 'M')
     return last_records
-
-
-"""def plot_ratio(healthy_sample, fully_vac_sample, inf_vac_sample, subject_id, age_cats, region_ids):
-    colors = px.colors.qualitative.Plotly
-    severe_degree = {1: 'удовл.', 2: 'средней тяж.',
-                     3: 'тяж.', 4: 'крайне тяж.',
-                     5: 'кл. смерть', 6: 'терм.'}
-    df_titles = {0: 'невакцинированные',
-                 1: 'вакцинированные',
-                 2: 'заболевшие и вакцинированные(до 6 месяцев)'}
-    '''3: 'заболевшие и вакцинированные(от 3 до 6 месяцев)',
-    4: 'заболевшие и вакцинированные(от 6 до 9 месяцев)',
-    5: 'заболевшие и вакцинированные(от 9 до 12 месяцев)',
-    6: 'заболевшие и вакцинированные(от 12 до 15 месяцев)'''
-
-    fig = make_subplots(rows=2, cols=2, vertical_spacing=0.06, shared_yaxes=True,
-                        subplot_titles=('Категория 20-29 лет', 'Категория 60-69 лет'))
-    fig.update_layout(title={'text': f"Доля заболевших в феврале с разной степенью тяжести "
-                                     f"({region_ids[region_ids['region_id']==subject_id]['short_name'].values[0]})",
-                             'x': 0.5})
-    show_legend = True
-    for i, age_cat in enumerate(age_cats):
-        max_cut_value = healthy_sample[(healthy_sample['age_cat'].isin(age_cats)) &
-                                       (healthy_sample['region_id'] == subject_id)]['ratio'].max()
-        min_cut_value1 = healthy_sample[(healthy_sample['age_cat'].isin(age_cats)) &
-                                       (healthy_sample['tyazh_code'] == 2) &
-                                       (healthy_sample['region_id'] == subject_id)]['ratio'].max()
-        min_cut_value2 = fully_vac_sample[(fully_vac_sample['age_cat'].isin(age_cats)) &
-                                        (fully_vac_sample['tyazh_code'] == 2) &
-                                        (fully_vac_sample['region_id'] == subject_id)]['ratio'].max()
-        min_cut_value3 = inf_vac_sample[(inf_vac_sample['age_cat'].isin(age_cats)) &
-                                        (inf_vac_sample['tyazh_code'] == 2) &
-                                        (inf_vac_sample['region_id'] == subject_id)]['ratio'].max()
-        if min_cut_value1 > min_cut_value2 and min_cut_value1 > min_cut_value3:
-            min_cut_value = min_cut_value1
-        elif min_cut_value2 > min_cut_value1 and min_cut_value2 > min_cut_value3:
-            min_cut_value = min_cut_value2
-        else:
-            min_cut_value = min_cut_value3
-        cut_interval = [min_cut_value+0.15*min_cut_value, max_cut_value-0.15*max_cut_value]
-
-        for j, df in enumerate([healthy_sample, fully_vac_sample, inf_vac_sample]):
-            region_df = df[df['region_id'] == subject_id]
-            df = region_df[region_df['age_cat'] == age_cat]
-            x1, y1 = df['tyazh_code'], df['ratio']
-            tick_text = [severe_degree[x] for x in x1]
-            if i != 0:
-                show_legend = False
-            fig.add_trace(go.Bar(x=x1,
-                                 y=y1,
-                                 name=df_titles[j],
-                                 showlegend=show_legend,
-                                 marker_color=colors[j]), row=2, col=i+1)
-
-            fig.add_trace(go.Bar(x=x1,
-                                 y=y1,
-                                 name=df_titles[j],
-                                 marker_color=colors[j],
-                                 showlegend=False), row=1, col=i+1)
-
-            fig.update_yaxes(range=[cut_interval[1],  1], row=1, col=i+1)
-            fig.update_xaxes(visible=False, row=1, col=i+1)
-            fig.update_yaxes(range=[0, cut_interval[0]], row=2, col=i+1)
-
-    fig.update_xaxes(tickmode='array', tickvals=list(severe_degree.keys()), ticktext=list(severe_degree.values()))
-    fig.update_yaxes(showdividers=True)
-    fig.update_layout(autosize=False, width=1000, height=800)
-    fig.write_image(f"./ratio_{subject_id}_age_{'_'.join(list(map(str, age_cats)))}_3_groups.png",
-                    engine="kaleido")"""
 
 
 font = {'size': 8}
