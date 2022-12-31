@@ -42,7 +42,7 @@ def plot_vertical_bar_chart(x, y, ci, title_text):
                                                      "+%{error_y.array:.1%} "
                                                      "/ -%{error_y.arrayminus:.1%} "
                                                      "<extra></extra>")])
-    bar_chart.update_xaxes(tickformat='%m.%Y')
+    bar_chart.update_xaxes(tickformat='%m.%Y', dtick="M1")
     bar_chart.update_layout(paper_bgcolor="white",
                             autosize=False,
                             template='plotly_white',
