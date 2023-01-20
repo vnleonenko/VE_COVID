@@ -10,7 +10,7 @@ from mobile_layout import make_mobile_layout
 from utils import get_subjects, reformat_date, get_strain_data, get_months
 
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart, plot_int_bar_chart
-from graphs import plot_pie_chart, plot_int_bar_chart2
+from graphs import plot_pie_chart, plot_int_bar_chart2, plot_strains_and_ve
 from graphs import plot_choropleth_map
 
 
@@ -154,7 +154,7 @@ def update_int_bar_chart2(subject, vac_type, case, age, dates):
     return fig
 
 
-@app.callback(
+'''@app.callback(
     Output('pie-chart', 'figure'),
     Output('strain_month_year', 'options'),
     Input('strain_month_year', 'value'),
@@ -179,7 +179,49 @@ def update_pie_chart(date, subject):
     title_text = f'Соотношение циркулирующих штаммов COVID-19 ({subject}, {date_ru[0]})'
     fig = plot_pie_chart(pie_chart_data, title_text)
 
-    return [fig, date_options]
+    return [fig, date_options]'''
+
+
+@app.callback(
+    Output('strains_ve_graph', 'figure'),
+    Input('subject', 'value'),
+    Input('disease_severity', 'value'),
+    Input('age_group', 'value'),
+    Input('vaccine_type', 'value'),
+)
+def update_strains_ve_graph(subject, case, age, vac_type):
+    subject_en = ''
+    if subject == 'РФ':
+        subject_en = 'Russian Federation'
+    elif subject == 'г. Санкт-Петербург':
+        subject_en = 'Saint Petersburg'
+    elif subject == 'Московская область':
+        subject_en = 'Moscow'
+    with MSSQL() as mssql:
+        ve_data = mssql.extract_ve(age, vac_type, subject=subject, age_groups=3, vac_intervals=1)
+
+    ve_data['data_point'] = ve_data['data_point'].apply(lambda x: x.split('_')[0] \
+                                                        .replace('.', '-'))
+
+    strains_data = strain_data.query(f'subject == "{subject_en}"')
+    melted_dict = pd.DataFrame(pd.DataFrame(strains_data['pango_lineage']\
+                                            .values.tolist()).stack().reset_index(level=1))
+    melted_dict.columns = ['keys', 'values']
+    strains_data = pd.merge(strains_data.reset_index(drop=True), melted_dict,
+                            left_index=True, right_index=True)
+    strains_data = strains_data[~strains_data['keys'].isin(['Unassigned', np.nan])]
+    strains_data.loc[strains_data['values'] < 0.05, 'keys'] = 'other'
+    strains_data = strains_data.groupby(['collection_date', 'keys'], as_index=False).sum()
+
+    ve_data = ve_data[ve_data['data_point'].isin(strains_data['collection_date'])]
+    ve_data = ve_data.fillna(0)
+    strains_data = strains_data[strains_data['collection_date'].isin(ve_data['data_point'])]
+    title = f'ЭВ в отнощении предотвращения {cases[case]} COVID-19 ' \
+            f'при данных циркулирующих штаммах<br>' \
+            f'({vaccines_dict[vac_type]}, {age_groups[age]}, {subject})'
+    fig = plot_strains_and_ve(strains_data, ve_data, case, age, title)
+
+    return fig
 
 
 if __name__ == '__main__':

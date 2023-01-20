@@ -6,7 +6,7 @@ from connector import MSSQLConnector
 
 
 if __name__ == "__main__":
-    csv_path = '../output/ve/ve_3_1_new_dates.csv'
+    csv_path = 'output/ve/ve_3_1_updated_dates_all_subjects.csv'
 
     ve_df = pd.read_csv(csv_path, encoding='cp1251', delimiter=';')
     ve_df.iloc[:, 5:] = ve_df.iloc[:, 5:].astype('float64')

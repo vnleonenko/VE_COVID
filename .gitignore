@@ -4,11 +4,6 @@ venv
 .DS_Store
 .env
 newvenv
-calculations/unaggregated_data/main.py
-calculations/unaggregated_data/utils.py
-calculations/unaggregated_data/initial_data
-calculations/unaggregated_data/input
-calculations/unaggregated_data/output
-calculations/output
-calculations/unaggregated_data/inf_vac_last_records.csv
+calculations/unaggregated_data
 calculations/unaggregated_data/fully_vac_last_records.csv
+calculations/unaggregated_data/inf_vac_last_records.csv

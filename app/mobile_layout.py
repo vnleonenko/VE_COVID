@@ -134,23 +134,12 @@ def make_mobile_layout(months, initial_values):
                                                                           6: '80+'},
                                                                    id='age_slider')
                                                     ]),
-                                            dbc.Tab(label='Штаммы',
+                                            dbc.Tab(label='Общая ЭВ и штаммы',
                                                     children=[
-                                                        dbc.Row([
-                                                            dbc.Col([
-                                                                html.Label('Выберите месяц и год',
-                                                                           className='strain-dropdown-label'),
-                                                                dcc.Dropdown(id='strain_month_year',
-                                                                             value='2020-02',
-                                                                             clearable=False,
-                                                                             className='strain-dropdown'),
-                                                                dcc.Graph(id='pie-chart',
-                                                                          config=config,
-                                                                          className='strains-graph')
-                                                            ])
-                                                        ])
-                                                    ]
-                                            )
+                                                        dcc.Graph(id='strains_ve_graph',
+                                                                  config=config,
+                                                                  className='strains-graph')]
+                                            ),
                                         ], className='tabs')
                                     ])
                                 ])
@@ -181,3 +170,22 @@ def make_mobile_layout(months, initial_values):
         ],  style={'marginLeft': '0px', 'marginRight': '0px'},  className='app-div-container')
     ], fluid=True, className='container-fluid')
     return layout
+
+
+
+'''
+[
+                                                        dbc.Row([
+                                                            dbc.Col([
+                                                                html.Label('Выберите месяц и год',
+                                                                           className='strain-dropdown-label'),
+                                                                dcc.Dropdown(id='strain_month_year',
+                                                                             value='2020-02',
+                                                                             clearable=False,
+                                                                             className='strain-dropdown'),
+                                                                dcc.Graph(id='pie-chart',
+                                                                          config=config,
+                                                                          className='strains-graph')
+                                                            ])
+                                                        ])
+                                                    ]'''
