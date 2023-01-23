@@ -132,7 +132,7 @@ def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
     return fig
 
 
-@app.callback(
+'''@app.callback(
     Output('interval_bar_chart2', 'figure'),
     Input('subject', 'value'),
     Input('vaccine_type', 'value'),
@@ -151,7 +151,7 @@ def update_int_bar_chart2(subject, vac_type, case, age, dates):
     title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
                  f'({vaccines_dict[vac_type]}, {ages_dict[age]} лет, {subject})'
     fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
-    return fig
+    return fig'''
 
 
 '''@app.callback(

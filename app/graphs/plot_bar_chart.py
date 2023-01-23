@@ -1,9 +1,5 @@
 import plotly.graph_objects as go
 import pandas as pd
-import locale
-
-
-locale.setlocale(locale.LC_TIME, 'ru_RU')
 
 
 def generate_colorscale(y):

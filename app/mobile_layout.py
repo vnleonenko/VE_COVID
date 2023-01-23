@@ -2,10 +2,9 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import html, dcc
 
-
-vaccines = [{'label': 'Спутник V',  'value': 'SputnikV'},
+vaccines = [{'label': 'Спутник V', 'value': 'SputnikV'},
             {'label': 'Спутник Лайт', 'value': 'SputnikLite'},
-            {'label': 'ЭпиВак',  'value': 'EpiVacCorona'},
+            {'label': 'ЭпиВак', 'value': 'EpiVacCorona'},
             {'label': 'КовиВак', 'value': 'CoviVac'},
             {'label': 'Все вакцины', 'value': 'AllVaccines'}]
 
@@ -19,7 +18,7 @@ covid_cases = [{'label': 'заболевшие', 'value': 'zab'},
                {'label': 'умершие', 'value': 'death'}]
 
 mode_bar_buttons_to_remove = ['autoScale2d', 'pan2d', 'zoom2d', 'select2d', 'lasso2d']
-config = dict(displaylogo=False,  responsive=True,  modeBarButtonsToRemove=mode_bar_buttons_to_remove)
+config = dict(displaylogo=False, responsive=True, modeBarButtonsToRemove=mode_bar_buttons_to_remove)
 
 subjects = [{'label': 'Российская Федерация', 'value': 'РФ', },
             {'label': 'г. Санкт-Петербург', 'value': 'г. Санкт-Петербург', },
@@ -99,7 +98,7 @@ def make_mobile_layout(months, initial_values):
                                     ])
                                 ])
                             ], style={"overflow": "scroll"},
-                               className='dropdown-container shadow p-3 mb-5 bg-white rounded')
+                                className='dropdown-container shadow p-3 mb-5 bg-white rounded')
                         ], xs=12, md=12, lg=4, xl=4),
                         # col2 tabs
                         dbc.Col([
@@ -119,32 +118,18 @@ def make_mobile_layout(months, initial_values):
                                                                   config=config,
                                                                   className='int-bar-chart')
                                                     ]),
-                                            dbc.Tab(label='Интервальная ЭВ2',
-                                                    children=[
-                                                        dcc.Graph(id='interval_bar_chart2',
-                                                                  config=config,
-                                                                  className='int-bar-chart2'),
-                                                        html.Div('Выберите возрастную группу',
-                                                                 style={'marginLeft': 20,
-                                                                        'marginBottom': 10}),
-                                                        dcc.Slider(0, 6, 1, value=0,
-                                                                   marks={0: '20-29', 1: '30-39',
-                                                                          2: '40-49', 3: '50-59',
-                                                                          4: '60-69', 5: '70-79',
-                                                                          6: '80+'},
-                                                                   id='age_slider')
-                                                    ]),
+
                                             dbc.Tab(label='Общая ЭВ и штаммы',
                                                     children=[
                                                         dcc.Graph(id='strains_ve_graph',
                                                                   config=config,
                                                                   className='strains-graph')]
-                                            ),
+                                                    ),
                                         ], className='tabs')
                                     ])
                                 ])
                             ], style={"overflow": "scroll"},
-                               className='dropdown-container shadow p-3 mb-5 bg-white rounded')
+                                className='dropdown-container shadow p-3 mb-5 bg-white rounded')
                         ], xs=12, md=12, lg=8, xl=8)
                     ]),
                     dbc.Row([
@@ -167,10 +152,9 @@ def make_mobile_layout(months, initial_values):
                     ])
                 ], xs=11, lg=11)
             ], justify='evenly'),
-        ],  style={'marginLeft': '0px', 'marginRight': '0px'},  className='app-div-container')
+        ], style={'marginLeft': '0px', 'marginRight': '0px'}, className='app-div-container')
     ], fluid=True, className='container-fluid')
     return layout
-
 
 
 '''
@@ -189,3 +173,20 @@ def make_mobile_layout(months, initial_values):
                                                             ])
                                                         ])
                                                     ]'''
+
+'''dbc.Tab(label='Интервальная ЭВ2',
+                                            children=[
+                                                dcc.Graph(id='interval_bar_chart2',
+                                                          config=config,
+                                                          className='int-bar-chart2'),
+                                                html.Div('Выберите возрастную группу',
+                                                         style={'marginLeft': 20,
+                                                                'marginBottom': 10}),
+                                                dcc.Slider(0, 6, 1, value=0,
+                                                           marks={0: '20-29', 1: '30-39',
+                                                                  2: '40-49', 3: '50-59',
+                                                                  4: '60-69', 5: '70-79',
+                                                                  6: '80+'},
+                                                           id='age_slider')
+                                            ],
+                                            ),'''
