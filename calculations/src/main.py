@@ -27,9 +27,9 @@ def get_cli_args():
 
     compute_parser.add_argument('--age_groups', required=True)
     compute_parser.add_argument('--vac_intervals', action='store_true')
-    compute_parser.add_argument('--data_points', required=False, type=FileType('r', encoding='utf-8'),
+    compute_parser.add_argument('--data_points', required=True, type=FileType('r', encoding='utf-8'),
                                 action=LoadFromFile)
-    compute_parser.add_argument('--subjects',  required=False, type=FileType('r', encoding='utf-8'),
+    compute_parser.add_argument('--subjects',  required=True, type=FileType('r', encoding='utf-8'),
                                 action=LoadFromFile)
 
     push_parser.add_argument('--file_path', required=True, type=str)
