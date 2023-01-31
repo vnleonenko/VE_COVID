@@ -12,6 +12,7 @@ from utils import get_subjects, reformat_date, get_strain_data, get_months
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart, plot_int_bar_chart
 from graphs import plot_pie_chart, plot_int_bar_chart2, plot_strains_and_ve
 from graphs import plot_choropleth_map
+from flask import request
 
 
 geojson_path = r'data/map_data/subject_borders_of_russia.json'
@@ -36,11 +37,11 @@ age_groups = {'18-59': 'от 18 до 59 лет',
 
 initial_values = {'subject_value': 'РФ', 'vaccine_value': 'SputnikV',
                   'age_value': '18-59', 'case_value': 'zab'}
-
+login = 'test'
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': "width=device-width, "
                        "initial-scale=1, maximum-scale=1, user-scalable=no"}])
-app.layout = make_mobile_layout(get_months(), initial_values)
+app.layout = make_mobile_layout(get_months(), initial_values, login)
 server = app.server
 
 
@@ -132,26 +133,27 @@ def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
     return fig
 
 
-'''@app.callback(
-    Output('interval_bar_chart2', 'figure'),
-    Input('subject', 'value'),
-    Input('vaccine_type', 'value'),
-    Input('disease_severity', 'value'),
-    Input('age_slider', 'value'),
-    Input('month_year_int', 'value')
-)
-def update_int_bar_chart2(subject, vac_type, case, age, dates):
-    ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
-                 3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
+if login == 'internal':
+    @app.callback(
+        Output('interval_bar_chart2', 'figure'),
+        Input('subject', 'value'),
+        Input('vaccine_type', 'value'),
+        Input('disease_severity', 'value'),
+        Input('age_slider', 'value'),
+        Input('month_year_int', 'value')
+    )
+    def update_int_bar_chart2(subject, vac_type, case, age, dates):
+        ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
+                     3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
 
-    with MSSQL() as mssql:
-        int_ages_ve_df = mssql.extract_ve(ages_dict[age], vac_type, subject=subject, age_groups=7, vac_intervals=6)
+        with MSSQL() as mssql:
+            int_ages_ve_df = mssql.extract_ve(ages_dict[age], vac_type, subject=subject, age_groups=7, vac_intervals=6)
 
-    converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-    title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
-                 f'({vaccines_dict[vac_type]}, {ages_dict[age]} лет, {subject})'
-    fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
-    return fig'''
+        converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
+        title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
+                     f'({vaccines_dict[vac_type]}, {ages_dict[age]} лет, {subject})'
+        fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
+        return fig
 
 
 '''@app.callback(
