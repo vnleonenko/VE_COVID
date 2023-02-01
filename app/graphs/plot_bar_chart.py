@@ -140,7 +140,6 @@ def plot_int_bar_chart2(data, dates, case, title_text):
         y = y[['ve_'+case, 'cil_'+case, 'cih_'+case]]
         cih = y['cih_'+case] - y['ve_'+case]
         cil = y['ve_'+case] - y['cil_'+case]
-        # print(y['ve_'+case])
         bar_chart = go.Bar(x=x, y=y['ve_'+case], width=0.6, showlegend=False,
                            marker={'color': y['ve_'+case].fillna(0),
                                    'colorscale': generate_colorscale(y['ve_'+case]),
@@ -161,6 +160,6 @@ def plot_int_bar_chart2(data, dates, case, title_text):
         fig.update_layout(autosize=False, separators=',', template='plotly_white',
                           margin={'l': 30, 'b': 25, 't': 90, 'r': 20},
                           title={'text': title_text, 'x': 0.5, 'y': 0.92,
-                                  'xanchor': 'center', 'yanchor': 'top',
-                                  'font': {'size': 12}})
+                                 'xanchor': 'center', 'yanchor': 'top',
+                                 'font': {'size': 12}})
     return fig

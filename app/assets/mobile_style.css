@@ -38,7 +38,6 @@ margin-left: 20px
 
 .tabs-container{
 height: 70vh;
-/*background-color: white*/
 }
 
 .tabs{
@@ -80,7 +79,6 @@ margin: 20px 0px 10px 20px;
 
 .strains-graph{
 margin: 20px 40px 10px 20px;
-/*vertical-align: middle;*/
 width: 100%;
 height: 55vh;
 }

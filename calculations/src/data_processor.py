@@ -9,6 +9,6 @@ class DataProcessor:
         query_res = list(map(list, self.cursor.execute(query).fetchall()))
         df = pd.DataFrame(query_res, columns=columns)
         sort_columns = list(filter(lambda x: 'count' not in x, columns))
-        df = df.sort_values(by=sort_columns, ignore_index=True)
+        df.sort_values(by=sort_columns, inplace=True, ignore_index=True)
         return df
 

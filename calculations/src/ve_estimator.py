@@ -30,8 +30,6 @@ class VEEstimator:
         vac_pop_df_corrected = vac_pop_df_corrected.sort_values(by=['data_point', 'region', 'age_group', 'vaccine'],
                                                                 ignore_index=True)
 
-        '''vac_pop_df['population'] = vac_pop_df[vac_pop_df.columns.values].progress_apply(lambda row:
-                                              self._ppv_correction(vac_pop_df, row), axis=1, result_type="expand")'''
         ppv_df['ppv'] = vac_pop_df_corrected['vac_count'] / vac_pop_df_corrected['population']
         ppv_df['ppv'] = ppv_df['ppv'].astype('float32')
         return ppv_df
@@ -98,6 +96,5 @@ class VEEstimator:
             ve_df[['ve_'+case, 'cil_'+case, 'cih_'+case]] = merged_df[[inf_column, inf_vac_column, ppv_column]]\
                 .progress_apply(lambda x: self.get_ve_w_ci(x) if np.all(x[:2]) != 0
                                 else [np.nan, np.nan, np.nan], axis=1, result_type="expand")
-            # ve_df.to_csv(f'../output/ve_{case}.csv', sep=';', index=False, encoding='cp1251', na_rep='NULL')
 
         return ve_df
