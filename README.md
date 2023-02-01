@@ -22,6 +22,8 @@ data_points.txt, и субъектов в файле subjects.txt для 3х в�
 вводимая в консоль, выглядит как:
 
     ```python main.py compute_ve --age_groups 3 --data_points ./input/data_points.txt --subjects ./input/subjects.txt```
+    
+    Для расчета ЭВ с дифференциацией по возрастным группам и периодам после вакцинации:
 
     ```python main.py compute_ve --age_groups 9 --vac_intervals --data_points ./input/data_points.txt --subjects ./input/subjects.txt```
 
