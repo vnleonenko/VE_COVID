@@ -17,15 +17,15 @@ class MSSQLConnector:
         self.cursor = self.connection.cursor()
 
     def unload_ve(self, csv_path):
-        # csv_path = 'output/ve/ve_3_1_updated_dates_all_subjects.csv'
 
         ve_df = pd.read_csv(csv_path, encoding='cp1251', delimiter=';')
         ve_df.iloc[:, 5:] = ve_df.iloc[:, 5:].astype('float64')
         ve_df = ve_df.replace([np.nan, -np.inf, np.inf], None)
-        table_name = 'dbo.VE_TEST'
+        table_name = 'dbo.VE_VE_EST'
         values = ','.join(['?' for _ in range(len(ve_df.columns))])
         insert_query = f'''insert into {table_name} values ({values})'''
 
+        print('Data unloading to VE_VE_EST table is starting')
         for i in tqdm(range(ve_df.shape[0])):
             try:
                 self.cursor.execute(insert_query, ve_df.iloc[i, :].tolist())

@@ -1,9 +1,12 @@
+import os
+
+import argparse
+from argparse import ArgumentParser, FileType
+
 from connector import MSSQLConnector
 from ve_estimator import VEEstimator
 from data_processor import DataProcessor
 from query_generator import QueryGenerator
-from argparse import ArgumentParser, FileType
-import argparse
 
 
 class LoadFromFile(argparse.Action):
@@ -40,8 +43,6 @@ def get_cli_args():
 def main():
     parser = get_cli_args()
     cli_args = parser.parse_args()
-    # ['--age_groups', '3', '--data_points', './input/data_points.txt',
-    # '--subjects', './input/subjects.txt']
     if cli_args.command == 'compute_ve':
         data_points = cli_args.data_points
         subjects = cli_args.subjects
@@ -53,6 +54,8 @@ def main():
                                        subjects=subjects, data_points=data_points)
             # add execution info
             data_processor = DataProcessor(con.cursor)
+            print('\nConnector to database has been created to query data from ZAB_VIEW, ZAB_VAC_VIEW, VAC_VIEW '
+                  'and NAS_AGE table.')
             zab_query, zab_columns = query_gen.query_zab_data()
             vac_query, vac_columns = query_gen.query_vac_data()
             zab_vac_query, zab_vac_columns = query_gen.query_zab_vac_data()
@@ -61,21 +64,29 @@ def main():
             vac_df = data_processor.query_to_df(vac_query, vac_columns)
             zab_vac_df = data_processor.query_to_df(zab_vac_query, zab_vac_columns)
             pop_df = data_processor.query_to_df(*query_gen.query_pop_data())
+            print('Data extracted from database.')
 
-        estimator = VEEstimator(zab_df, vac_df, zab_vac_df, pop_df)
-        ve_df = estimator.compute_ve()
         if query_gen.vac_interval_group:
             vac_intervals = '6'
         else:
             vac_intervals = '1'
-        # write output path check if output folder was deleted or absent
-        ve_df.to_csv(f'./output/ve/ve_{query_gen.age_groups}_{vac_intervals}.csv',
+
+        output_folder = './output/ve'
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
+            print('Output folder has been created.')
+
+        print('Estimator object has been created to process the dataframes with GLM model:')
+        estimator = VEEstimator(zab_df, vac_df, zab_vac_df, pop_df)
+        ve_df = estimator.compute_ve()
+        ve_df.to_csv(f'{output_folder}/ve_{query_gen.age_groups}_{vac_intervals}.csv',
                      sep=';', index=False, encoding='cp1251', na_rep='NULL')
 
     elif cli_args.command == 'unload_ve':
         if cli_args.file_path is not None:
             file_path = cli_args.file_path
             with MSSQLConnector() as con:
+                print('\nConnector to database has been created to unload calculated data')
                 con.unload_ve(file_path)
         else:
             print(f'Path to the csv file containing ve estimations has to be provided. '

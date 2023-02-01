@@ -90,7 +90,7 @@ class VEEstimator:
         merged_df.loc[:, int_columns] = merged_df.loc[:, int_columns].astype('int32')
 
         ve_df = merged_df.loc[:, merge_columns]
-        for case in tqdm(cases):
+        for case in cases:
             print(f'Calculations for {case} cases have been started')
             inf_column = 'count_' + case
             inf_vac_column = 'count_vac_' + case

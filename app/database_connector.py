@@ -5,7 +5,7 @@ import os
 
 class MSSQL:
     def __init__(self):
-        self.server = 'tcp:db.influenza.spb.ru,1984'
+        self.server = 'tcp:192.168.1.231,1984'
         self.database = 'VE'
         self.username = 've_access'
         self.password = 'VE@niiGrippa4$'
@@ -44,7 +44,7 @@ class MSSQL:
         elif age_groups > 3 and vac_intervals == 6:
             data_point_clause = "like '%[B]%' and vac_interval_group not like '21_195_days'"
 
-        query = f'''select * from dbo.VE_TEST where data_point {data_point_clause}
+        query = f'''select * from dbo.VE_VE_EST where data_point {data_point_clause}
                 and age_group = '{age}'  '''
         if subject is not None:
             query = query + f'''and region = '{subject}' '''

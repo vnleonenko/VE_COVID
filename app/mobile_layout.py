@@ -25,7 +25,7 @@ subjects = [{'label': 'Российская Федерация', 'value': 'РФ'
             {'label': 'Московская область', 'value': 'Московская область', }]
 
 
-def make_mobile_layout(months, initial_values, login):
+def make_mobile_layout(months, initial_values):
     subject_dropdown = dcc.Dropdown(subjects, value=initial_values['subject_value'],
                                     id='subject', clearable=False, className='dropdown')
     vaccine_dropdown = dcc.Dropdown(vaccines, value=initial_values['vaccine_value'],
@@ -72,18 +72,24 @@ def make_mobile_layout(months, initial_values, login):
 
     tabs = dbc.Tabs([
                 dbc.Tab(label='Общая ЭВ',
+                        id='tab_1',
+                        # tab_style={'display': 'none'},
                         children=[
                             dcc.Graph(id='bar_chart_v',
                                       config=config,
                                       className='bar-chart-v')
                         ]),
                 dbc.Tab(label='Интервальная ЭВ1',
+                        id='tab_2',
+                        # tab_style={'display': 'none'},
                         children=[
                             dcc.Graph(id='interval_bar_chart',
                                       config=config,
                                       className='int-bar-chart')
                         ]),
                 dbc.Tab(label='Интервальная ЭВ2',
+                        id='tab_3',
+                        # tab_style={'display': 'none'},
                         children=[
                             dcc.Graph(id='interval_bar_chart2',
                                       config=config,
@@ -99,23 +105,14 @@ def make_mobile_layout(months, initial_values, login):
                                        id='age_slider')
                         ]),
                 dbc.Tab(label='Общая ЭВ и штаммы',
+                        id='tab_4',
+                        # tab_style={'display': 'none'},
                         children=[
                             dcc.Graph(id='strains_ve_graph',
                                       config=config,
                                       className='strains-graph')]
                         ),
             ], className='tabs')
-
-    if login in ['test', 'full_access']:
-        tabs_cor = []
-        for tab in tabs.children:
-            if tab.label != 'Интервальная ЭВ2':
-                tabs_cor.append(tab)
-        tabs.children = tabs_cor
-    elif login == 'internal':
-        pass
-    else:
-        tabs = dbc.Tabs([])
 
     map_graph = html.Div([dcc.Loading(
                           dcc.Graph(id='map',
@@ -136,11 +133,9 @@ def make_mobile_layout(months, initial_values, login):
                                           и регистра вакцинированных на 15-е число месяца, следующего за отчетным'''),
                     ], className='header'),
                     dbc.Row([
-                        # col1 dropdowns
                         dbc.Col([
                             filters
                         ], xs=12, md=12, lg=4, xl=4),
-                        # col2 tabs
                         dbc.Col([
                             html.Div([
                                 dbc.Row([

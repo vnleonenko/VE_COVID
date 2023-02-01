@@ -10,8 +10,9 @@ from mobile_layout import make_mobile_layout
 from utils import get_subjects, reformat_date, get_strain_data, get_months
 
 from graphs import plot_vertical_bar_chart, plot_horizontal_bar_chart, plot_int_bar_chart
-from graphs import plot_pie_chart, plot_int_bar_chart2, plot_strains_and_ve
+from graphs import plot_int_bar_chart2, plot_strains_and_ve
 from graphs import plot_choropleth_map
+
 from flask import request
 
 
@@ -37,12 +38,29 @@ age_groups = {'18-59': 'от 18 до 59 лет',
 
 initial_values = {'subject_value': 'РФ', 'vaccine_value': 'SputnikV',
                   'age_value': '18-59', 'case_value': 'zab'}
-login = 'test'
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': "width=device-width, "
                        "initial-scale=1, maximum-scale=1, user-scalable=no"}])
-app.layout = make_mobile_layout(get_months(), initial_values, login)
+app.layout = make_mobile_layout(get_months(), initial_values)
 server = app.server
+
+
+'''@app.callback(
+    Output('tab_1', 'tab_style'),
+    Output('tab_2', 'tab_style'),
+    Output('tab_3', 'tab_style'),
+    Output('tab_4', 'tab_style'),
+    Input('subject', 'value'),
+)
+def update_tabs(_):
+    encoded_auth_data = request.environ['HTTP_AUTHORIZATION'].split(' ')[1]
+    decoded_auth_data = b64decode(encoded_auth_data).decode('utf-8')
+    login = decoded_auth_data.split(':')[0]
+    if login in ['test', 'full_access']:
+        return [{'display':'block'}, {'display':'block'}, {'display':'none'}, {'display':'block'}]
+    elif login == 'internal':
+        return [{'display':'block'}, {'display':'block'}, {'display':'block'}, {'display':'block'}]
+'''
 
 
 @app.callback(
@@ -133,55 +151,26 @@ def update_interval_bar_chart(subject, vac_type, case, age, dates_list):
     return fig
 
 
-if login == 'internal':
-    @app.callback(
-        Output('interval_bar_chart2', 'figure'),
-        Input('subject', 'value'),
-        Input('vaccine_type', 'value'),
-        Input('disease_severity', 'value'),
-        Input('age_slider', 'value'),
-        Input('month_year_int', 'value')
-    )
-    def update_int_bar_chart2(subject, vac_type, case, age, dates):
-        ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
-                     3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
-
-        with MSSQL() as mssql:
-            int_ages_ve_df = mssql.extract_ve(ages_dict[age], vac_type, subject=subject, age_groups=7, vac_intervals=6)
-
-        converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
-        title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
-                     f'({vaccines_dict[vac_type]}, {ages_dict[age]} лет, {subject})'
-        fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
-        return fig
-
-
-'''@app.callback(
-    Output('pie-chart', 'figure'),
-    Output('strain_month_year', 'options'),
-    Input('strain_month_year', 'value'),
-    Input('subject', 'value')
+@app.callback(
+    Output('interval_bar_chart2', 'figure'),
+    Input('subject', 'value'),
+    Input('vaccine_type', 'value'),
+    Input('disease_severity', 'value'),
+    Input('age_slider', 'value'),
+    Input('month_year_int', 'value')
 )
-def update_pie_chart(date, subject):
-    strain_dates = strain_data['collection_date'].unique()
-    subject_en = ''
-    if subject == 'РФ':
-        subject_en = 'Russian Federation'
-    elif subject == 'г. Санкт-Петербург':
-        subject_en = 'Saint Petersburg'
-    elif subject == 'Московская область':
-        subject_en = 'Moscow'
+def update_interval_bar_chart2(subject, vac_type, case, age, dates):
+    ages_dict = {0: '20-29', 1: '30-39', 2: '40-49',
+                 3: '50-59', 4: '60-69', 5: '70-79', 6: '80+'}
 
-    pie_chart_data = strain_data.query(f'collection_date == "{date}" & subject == "{subject_en}"')
+    with MSSQL() as mssql:
+        int_ages_ve_df = mssql.extract_ve(ages_dict[age], vac_type, subject=subject, age_groups=7, vac_intervals=6)
 
-    strain_dates_ru = reformat_date(strain_dates.tolist(), delimiter='-')
-    date_options = [{'label': l, 'value': v} for l, v in zip(strain_dates_ru, strain_dates)]
-
-    date_ru = reformat_date([date], delimiter='-')
-    title_text = f'Соотношение циркулирующих штаммов COVID-19 ({subject}, {date_ru[0]})'
-    fig = plot_pie_chart(pie_chart_data, title_text)
-
-    return [fig, date_options]'''
+    converted_dates = sorted(reformat_date(dates, to_numeric=True, delimiter='.'), key=lambda x: x.split("."))
+    title_text = f'ЭВ в отношении предотвращения {cases[case]} COVID-19<br>' \
+                 f'({vaccines_dict[vac_type]}, {ages_dict[age]} лет, {subject})'
+    fig = plot_int_bar_chart2(int_ages_ve_df, converted_dates, case, title_text)
+    return fig
 
 
 @app.callback(
@@ -206,7 +195,7 @@ def update_strains_ve_graph(subject, case, age, vac_type):
                                                         .replace('.', '-'))
 
     strains_data = strain_data.query(f'subject == "{subject_en}"')
-    melted_dict = pd.DataFrame(pd.DataFrame(strains_data['pango_lineage']\
+    melted_dict = pd.DataFrame(pd.DataFrame(strains_data['pango_lineage'] \
                                             .values.tolist()).stack().reset_index(level=1))
     melted_dict.columns = ['keys', 'values']
     strains_data = pd.merge(strains_data.reset_index(drop=True), melted_dict,
@@ -227,4 +216,4 @@ def update_strains_ve_graph(subject, case, age, vac_type):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

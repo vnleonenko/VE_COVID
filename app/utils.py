@@ -69,32 +69,6 @@ def reformat_date(dates, to_numeric=False, delimiter='.'):
     return result
 
 
-def compute_ve(pcv, ppv):
-    ve_columns = ['data_point', 'region', 'vac_interval_group', 'vaccine',
-                  've_zab_18_59', 've_hosp_18_59', 've_severe_18_59', 've_death_18_59',
-                  've_zab_60', 've_hosp_60', 've_severe_60', 've_death_60',
-                  've_zab_total', 've_hosp_total', 've_severe_total', 've_death_total']
-    ve_df = pd.DataFrame(columns=ve_columns)
-    merged_pcv_ppv = ppv.merge(pcv, on=['data_point', 'region', 'vac_interval_group', 'vaccine'],
-                               how='outer')
-    for ve_column in ve_columns:
-        if ve_column in pcv.columns and ve_column in ppv.columns:
-            ve_df[ve_column] = merged_pcv_ppv[ve_column]
-        else:
-            if '18_59' in ve_column:
-                age = '_18_59'
-            elif '60' in ve_column:
-                age = '_60'
-            else:
-                age = '_total'
-            case = ve_column.split('_')[1]
-            factor_pcv = merged_pcv_ppv['pcv_' + case + age] / (1 - merged_pcv_ppv['pcv_' + case + age])
-            factor_ppv = (1 - merged_pcv_ppv['ppv' + age]) / merged_pcv_ppv['ppv' + age]
-            ve_df[ve_column] = round(1 - (factor_pcv * factor_ppv), 5)
-
-    return ve_df
-
-
 def calc_virus_ratio(virus_titles: list):
     virus_types_ratio = {}
     for title in virus_titles:
@@ -140,9 +114,8 @@ def get_strain_data(csv_path):
 
 def get_months():
     with MSSQL() as mssql:
-        month_query = f'''select distinct(data_point) from dbo.VE_TEST
+        month_query = f'''select distinct(data_point) from dbo.VE_VE_EST
                       where data_point not like '%[B]%' '''
-        # and data_point not like '%[X]%'
         months_en = mssql.cursor.execute(month_query).fetchall()
         months_en = sorted([t[0] for t in months_en], key=lambda x: x.split('_'))
         months_ru = reformat_date(months_en, delimiter='_')
